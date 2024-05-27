@@ -51,7 +51,7 @@
     "solidity-coverage": "^0.8.11",
     "ts-node": "^10.9.1",
     "typechain": "^8.3.2",
-    "typescript": "^5.4.3"
+    "typescript": "^5.4.5"
   },
   "scripts": {
     "lint": "prettier --plugin=prettier-plugin-solidity --check src 'contracts/**/*.sol' && solhint 'contracts/**/*.sol'",
