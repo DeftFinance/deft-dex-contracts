@@ -1,0 +1,71 @@
+{
+  "name": "@uniswap/v2-core",
+  "description": "Build uniswap v2 with solidity 0.8",
+  "version": "1.0.1",
+  "homepage": "https://uniswap.org",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/islishude/uniswapv2-solc0.8"
+  },
+  "keywords": [
+    "uniswap",
+    "ethereum",
+    "v2",
+    "core",
+    "uniswap-v2"
+  ],
+  "files": [
+    "contracts",
+    "!contracts/test",
+    "typechain-types",
+    "!typechain-types/test",
+    "artifacts/contracts",
+    "!artifacts/test",
+    "!artifacts/contracts/**/*.dbg.json"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.6",
+    "@nomicfoundation/hardhat-ethers": "^3.0.5",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.10",
+    "@nomicfoundation/hardhat-toolbox": "^3.0.0",
+    "@nomicfoundation/hardhat-verify": "^1.1.1",
+    "@typechain/ethers-v6": "^0.4.0",
+    "@typechain/hardhat": "^8.0.0",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": ">=10.0.6",
+    "@types/node": ">=20.11.24",
+    "@typescript-eslint/eslint-plugin": "^7.0.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "chai": "^4.4.1",
+    "dotenv": "^16.4.5",
+    "eslint": "^8.57.0",
+    "ethers": "^6.11.1",
+    "hardhat": "^2.22.2",
+    "hardhat-gas-reporter": "^1.0.10",
+    "prettier": "^3.2.4",
+    "prettier-plugin-solidity": "^1.1.3",
+    "solhint": "^4.5.2",
+    "solidity-coverage": "^0.8.11",
+    "ts-node": "^10.9.1",
+    "typechain": "^8.3.2",
+    "typescript": "^5.4.3"
+  },
+  "scripts": {
+    "lint": "prettier --plugin=prettier-plugin-solidity --check src 'contracts/**/*.sol' && solhint 'contracts/**/*.sol'",
+    "lint:fix": "prettier --plugin=prettier-plugin-solidity --write src 'contracts/**/*.sol'",
+    "clean": "rimraf artifacts cache types",
+    "precompile": "pnpm run clean",
+    "compile": "hardhat compile",
+    "build": "pnpm run compile",
+    "test": "hardhat test",
+    "prepublishOnly": "pnpm run test"
+  },
+  "license": "GPL-3.0-or-later",
+  "packageManager": "pnpm@8.12.0",
+  "prettier": {
+    "trailingComma": "all"
+  }
+}
