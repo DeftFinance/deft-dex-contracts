@@ -63,9 +63,7 @@ describe("DeftFactory", () => {
 
     expect(await deftFactory.allPairsLength()).to.eq(1);
 
-    const deftPair = DEFT_PAIR_MOCK.attach(
-      deftPairCreate2Address,
-    ) as DeftPair;
+    const deftPair = DEFT_PAIR_MOCK.attach(deftPairCreate2Address) as DeftPair;
 
     expect(await deftPair.FACTORY()).to.eq(deftFactoryAddress);
 

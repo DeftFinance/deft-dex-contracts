@@ -13,18 +13,14 @@ describe("DeftPair", () => {
     const [ERC20_MOCK, DEFT_PAIR_MOCK, DEFT_FACTORY_MOCK] = await Promise.all([
       ethers.getContractFactory("ERC20"),
       ethers.getContractFactory("DeftPair"),
-      ethers.getContractFactory("DeftFactory")
+      ethers.getContractFactory("DeftFactory"),
     ]);
 
-    const [tokenA, tokenB, deftFactory] = await Promise.all(
-      [
-        ERC20_MOCK.deploy(
-          expandTo18Decimals(10000)),
-        ERC20_MOCK.deploy(
-          expandTo18Decimals(10000)),
-        DEFT_FACTORY_MOCK.deploy(wallet.address)
-      ]
-    );
+    const [tokenA, tokenB, deftFactory] = await Promise.all([
+      ERC20_MOCK.deploy(expandTo18Decimals(10000)),
+      ERC20_MOCK.deploy(expandTo18Decimals(10000)),
+      DEFT_FACTORY_MOCK.deploy(wallet.address),
+    ]);
 
     const [tokenAaddress, tokenBaddress] = await Promise.all([
       tokenA.getAddress(),
@@ -75,8 +71,12 @@ describe("DeftPair", () => {
       expectedLiquidity - MINIMUM_LIQUIDITY,
     );
 
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(token0Amount);
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(token1Amount);
+    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(
+      token0Amount,
+    );
+    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(
+      token1Amount,
+    );
 
     const deftPairReserves = await deftPair.getReserves();
 
@@ -194,7 +194,11 @@ describe("DeftPair", () => {
 
     await expect(deftPair.swap(0, expectedOutputAmount, wallet.address, "0x"))
       .to.emit(token1, "Transfer")
-      .withArgs(await deftPair.getAddress(), wallet.address, expectedOutputAmount)
+      .withArgs(
+        await deftPair.getAddress(),
+        wallet.address,
+        expectedOutputAmount,
+      )
       .to.emit(deftPair, "Sync")
       .withArgs(token0Amount + swapAmount, token1Amount - expectedOutputAmount)
       .to.emit(deftPair, "Swap")
@@ -251,7 +255,11 @@ describe("DeftPair", () => {
 
     await expect(deftPair.swap(expectedOutputAmount, 0, wallet.address, "0x"))
       .to.emit(token0, "Transfer")
-      .withArgs(await deftPair.getAddress(), wallet.address, expectedOutputAmount)
+      .withArgs(
+        await deftPair.getAddress(),
+        wallet.address,
+        expectedOutputAmount,
+      )
       .to.emit(deftPair, "Sync")
       .withArgs(token0Amount - expectedOutputAmount, token1Amount + swapAmount)
       .to.emit(deftPair, "Swap")
@@ -321,7 +329,12 @@ describe("DeftPair", () => {
       (await wallet.provider.getBlock("latest"))!.timestamp + 1,
     );
 
-    const tx = await deftPair.swap(expectedOutputAmount, 0, wallet.address, "0x");
+    const tx = await deftPair.swap(
+      expectedOutputAmount,
+      0,
+      wallet.address,
+      "0x",
+    );
 
     const receipt = await tx.wait();
 
@@ -357,9 +370,17 @@ describe("DeftPair", () => {
         expectedLiquidity - MINIMUM_LIQUIDITY,
       )
       .to.emit(token0, "Transfer")
-      .withArgs(await deftPair.getAddress(), wallet.address, token0Amount - 1000n)
+      .withArgs(
+        await deftPair.getAddress(),
+        wallet.address,
+        token0Amount - 1000n,
+      )
       .to.emit(token1, "Transfer")
-      .withArgs(await deftPair.getAddress(), wallet.address, token1Amount - 1000n)
+      .withArgs(
+        await deftPair.getAddress(),
+        wallet.address,
+        token1Amount - 1000n,
+      )
       .to.emit(deftPair, "Sync")
       .withArgs(1000, 1000)
       .to.emit(deftPair, "Burn")

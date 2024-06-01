@@ -1,7 +1,11 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
-import { DEFT_DEX_VERSION, TOTAL_SUPPLY, TEST_AMOUNT } from "./shared/constants";
+import {
+  DEFT_DEX_VERSION,
+  TOTAL_SUPPLY,
+  TEST_AMOUNT,
+} from "./shared/constants";
 
 describe("DeftLPT", () => {
   async function fixture() {
@@ -22,7 +26,7 @@ describe("DeftLPT", () => {
     expect(name).to.eq("Deft LP Token");
 
     expect(await deftLPtoken.symbol()).to.eq("LP-DEFT");
-  
+
     expect(await deftLPtoken.decimals()).to.eq(18);
 
     expect(await deftLPtoken.totalSupply()).to.eq(TOTAL_SUPPLY);
@@ -65,7 +69,7 @@ describe("DeftLPT", () => {
     await expect(deftLPtoken.approve(other.address, TEST_AMOUNT))
       .to.emit(deftLPtoken, "Approval")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-  
+
     expect(await deftLPtoken.allowance(wallet.address, other.address)).to.eq(
       TEST_AMOUNT,
     );
@@ -77,7 +81,7 @@ describe("DeftLPT", () => {
     await expect(deftLPtoken.transfer(other.address, TEST_AMOUNT))
       .to.emit(deftLPtoken, "Transfer")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-  
+
     expect(await deftLPtoken.balanceOf(wallet.address)).to.eq(
       TOTAL_SUPPLY - TEST_AMOUNT,
     );
