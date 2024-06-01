@@ -3,7 +3,7 @@ import { expandTo18Decimals } from "./utilities";
 export const DEFT_DEX_VERSION: string = "1";
 
 export const PAIR_HASH: string =
-"0x82bf1919bbe8995089630fa0e5b03967ef196ba1b74e0567242f3ab49000beaf";
+  "0x82bf1919bbe8995089630fa0e5b03967ef196ba1b74e0567242f3ab49000beaf";
 
 export const MINIMUM_LIQUIDITY: bigint = 10n ** 3n;
 
