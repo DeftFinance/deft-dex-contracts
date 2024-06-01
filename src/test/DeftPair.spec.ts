@@ -1,7 +1,7 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
-import { Signer } from "ethers";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
+import { HardhatEthersSigner } from "@nomicfoundation/hardhat-ethers/signers";
 import { DeftPair, ERC20 } from "../../typechain-types";
 import { MINIMUM_LIQUIDITY } from "./shared/constants";
 import { expandTo18Decimals, encodePrice } from "./shared/utilities";
@@ -88,7 +88,7 @@ describe("DeftPair", () => {
     token0: ERC20,
     token1: ERC20,
     deftPair: DeftPair,
-    wallet: Signer,
+    wallet: HardhatEthersSigner,
     token0Amount: bigint,
     token1Amount: bigint,
   ) {
@@ -97,7 +97,7 @@ describe("DeftPair", () => {
     await token0.transfer(deftPairAddress, token0Amount);
     await token1.transfer(deftPairAddress, token1Amount);
 
-    await deftPair.mint(await wallet.getAddress());
+    await deftPair.mint(wallet.address);
   }
 
   const swapTestCases: bigint[][] = [
