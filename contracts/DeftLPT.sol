@@ -1,21 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.20;
 
-import {IUniswapV2ERC20} from "./interfaces/IUniswapV2ERC20.sol";
+import {IDeftLPT} from "./interfaces/IDeftLPT.sol";
 
-contract UniswapV2ERC20 is IUniswapV2ERC20 {
-    string public constant override name = "Uniswap V2";
-    string public constant override symbol = "UNI-V2";
-    uint8 public constant override decimals = 18;
-    uint256 public override totalSupply;
-    mapping(address => uint256) public override balanceOf;
-    mapping(address => mapping(address => uint256)) public override allowance;
+abstract contract DeftLPT is IDeftLPT {
+    uint256 public totalSupply;
+    mapping(address => uint256) public balanceOf;
+    mapping(address => uint256) public nonces;
+    mapping(address => mapping(address => uint256)) public allowance;
 
-    bytes32 public override DOMAIN_SEPARATOR;
-    // keccak256("Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)");
-    bytes32 public constant override PERMIT_TYPEHASH =
+    bytes32 public immutable DOMAIN_SEPARATOR;
+    bytes32 public constant PERMIT_TYPEHASH =
         0x6e71edae12b1b97f4d1f60370fef10105fa2faae0126114a169c64845d6126c9;
-    mapping(address => uint256) public override nonces;
+    string public constant name = "Deft LP Token";
+    string public constant symbol = "LP-DEFT";
+    uint8 public constant decimals = 18;
 
     constructor() {
         DOMAIN_SEPARATOR = keccak256(
@@ -31,41 +30,12 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
         );
     }
 
-    function _mint(address to, uint256 value) internal {
-        totalSupply += value;
-        balanceOf[to] += value;
-        emit Transfer(address(0), to, value);
-    }
-
-    function _burn(address from, uint256 value) internal {
-        balanceOf[from] -= value;
-        totalSupply -= value;
-        emit Transfer(from, address(0), value);
-    }
-
-    function _approve(address owner, address spender, uint256 value) private {
-        allowance[owner][spender] = value;
-        emit Approval(owner, spender, value);
-    }
-
-    function _transfer(address from, address to, uint256 value) private {
-        balanceOf[from] -= value;
-        balanceOf[to] += value;
-        emit Transfer(from, to, value);
-    }
-
-    function approve(
-        address spender,
-        uint256 value
-    ) external override returns (bool) {
+    function approve(address spender, uint256 value) external returns (bool) {
         _approve(msg.sender, spender, value);
         return true;
     }
 
-    function transfer(
-        address to,
-        uint256 value
-    ) external override returns (bool) {
+    function transfer(address to, uint256 value) external returns (bool) {
         _transfer(msg.sender, to, value);
         return true;
     }
@@ -74,7 +44,7 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
         address from,
         address to,
         uint256 value
-    ) external override returns (bool) {
+    ) external returns (bool) {
         if (allowance[from][msg.sender] != type(uint256).max) {
             allowance[from][msg.sender] -= value;
         }
@@ -90,8 +60,8 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
         uint8 v,
         bytes32 r,
         bytes32 s
-    ) external override {
-        require(deadline >= block.timestamp, "UniswapV2: EXPIRED");
+    ) external {
+        require(deadline >= block.timestamp, "DeftLPT: EXPIRED");
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -111,8 +81,39 @@ contract UniswapV2ERC20 is IUniswapV2ERC20 {
         address recoveredAddress = ecrecover(digest, v, r, s);
         require(
             recoveredAddress != address(0) && recoveredAddress == owner,
-            "UniswapV2: INVALID_SIGNATURE"
+            "DeftLPT: INVALID_SIGNATURE"
         );
         _approve(owner, spender, value);
+    }
+
+    function _mint(address to, uint256 value) internal {
+        totalSupply += value;
+        balanceOf[to] += value;
+        emit Transfer(address(0), to, value);
+    }
+
+    function _burn(address from, uint256 value) internal {
+        balanceOf[from] -= value;
+        totalSupply -= value;
+        emit Transfer(from, address(0), value);
+    }
+
+    function _approve(
+        address owner,
+        address spender,
+        uint256 value
+    ) private {
+        allowance[owner][spender] = value;
+        emit Approval(owner, spender, value);
+    }
+
+    function _transfer(
+        address from,
+        address to,
+        uint256 value
+    ) private {
+        balanceOf[from] -= value;
+        balanceOf[to] += value;
+        emit Transfer(from, to, value);
     }
 }
