@@ -1,31 +1,37 @@
 import { expect } from "chai";
 import { ethers } from "hardhat";
 import { loadFixture } from "@nomicfoundation/hardhat-toolbox/network-helpers";
+import { DEFT_DEX_VERSION, TOTAL_SUPPLY, TEST_AMOUNT } from "./shared/constants";
 
-import { expandTo18Decimals, UniswapVersion } from "./shared/utilities";
-
-const TOTAL_SUPPLY = expandTo18Decimals(10000);
-const TEST_AMOUNT = expandTo18Decimals(10);
-
-describe("UniswapV2ERC20", () => {
+describe("DeftLPT", () => {
   async function fixture() {
-    const factory = await ethers.getContractFactory("ERC20");
-    const token = await factory.deploy(TOTAL_SUPPLY);
     const [wallet, other] = await ethers.getSigners();
-    return { token, wallet, other };
+
+    const DEFT_LPT_MOCK = await ethers.getContractFactory("ERC20");
+
+    const deftLPtoken = await DEFT_LPT_MOCK.deploy(TOTAL_SUPPLY);
+
+    return { wallet, other, deftLPtoken };
   }
 
   it("name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH", async () => {
-    const { token, wallet } = await loadFixture(fixture);
-    const name = await token.name();
-    expect(name).to.eq("Uniswap V2");
-    expect(await token.symbol()).to.eq("UNI-V2");
-    expect(await token.decimals()).to.eq(18);
-    expect(await token.totalSupply()).to.eq(TOTAL_SUPPLY);
-    expect(await token.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY);
+    const { wallet, deftLPtoken } = await loadFixture(fixture);
+
+    const name = await deftLPtoken.name();
+
+    expect(name).to.eq("Deft LP Token");
+
+    expect(await deftLPtoken.symbol()).to.eq("LP-DEFT");
+  
+    expect(await deftLPtoken.decimals()).to.eq(18);
+
+    expect(await deftLPtoken.totalSupply()).to.eq(TOTAL_SUPPLY);
+
+    expect(await deftLPtoken.balanceOf(wallet.address)).to.eq(TOTAL_SUPPLY);
+
     const { chainId } = await wallet.provider.getNetwork();
 
-    expect(await token.DOMAIN_SEPARATOR()).to.eq(
+    expect(await deftLPtoken.DOMAIN_SEPARATOR()).to.eq(
       ethers.keccak256(
         ethers.AbiCoder.defaultAbiCoder().encode(
           ["bytes32", "bytes32", "bytes32", "uint256", "address"],
@@ -36,14 +42,15 @@ describe("UniswapV2ERC20", () => {
               ),
             ),
             ethers.keccak256(ethers.toUtf8Bytes(name)),
-            ethers.keccak256(ethers.toUtf8Bytes(UniswapVersion)),
+            ethers.keccak256(ethers.toUtf8Bytes(DEFT_DEX_VERSION)),
             chainId,
-            await token.getAddress(),
+            await deftLPtoken.getAddress(),
           ],
         ),
       ),
     );
-    expect(await token.PERMIT_TYPEHASH()).to.eq(
+
+    expect(await deftLPtoken.PERMIT_TYPEHASH()).to.eq(
       ethers.keccak256(
         ethers.toUtf8Bytes(
           "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)",
@@ -53,85 +60,106 @@ describe("UniswapV2ERC20", () => {
   });
 
   it("approve", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
-    await expect(token.approve(other.address, TEST_AMOUNT))
-      .to.emit(token, "Approval")
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+
+    await expect(deftLPtoken.approve(other.address, TEST_AMOUNT))
+      .to.emit(deftLPtoken, "Approval")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-    expect(await token.allowance(wallet.address, other.address)).to.eq(
+  
+    expect(await deftLPtoken.allowance(wallet.address, other.address)).to.eq(
       TEST_AMOUNT,
     );
   });
 
   it("transfer", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
-    await expect(token.transfer(other.address, TEST_AMOUNT))
-      .to.emit(token, "Transfer")
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+
+    await expect(deftLPtoken.transfer(other.address, TEST_AMOUNT))
+      .to.emit(deftLPtoken, "Transfer")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-    expect(await token.balanceOf(wallet.address)).to.eq(
+  
+    expect(await deftLPtoken.balanceOf(wallet.address)).to.eq(
       TOTAL_SUPPLY - TEST_AMOUNT,
     );
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+
+    expect(await deftLPtoken.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });
 
   it("transfer:fail", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
-    await expect(token.transfer(other.address, TOTAL_SUPPLY + 1n)).to.be
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+
+    await expect(deftLPtoken.transfer(other.address, TOTAL_SUPPLY + 1n)).to.be
       .reverted; // ds-math-sub-underflow
-    await expect(token.connect(other).transfer(wallet.address, 1n)).to.be
+
+    await expect(deftLPtoken.connect(other).transfer(wallet.address, 1n)).to.be
       .reverted; // ds-math-sub-underflow
   });
 
   it("transferFrom", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
-    await token.approve(other.address, TEST_AMOUNT);
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+
+    await deftLPtoken.approve(other.address, TEST_AMOUNT);
+
     await expect(
-      token
+      deftLPtoken
         .connect(other)
         .transferFrom(wallet.address, other.address, TEST_AMOUNT),
     )
-      .to.emit(token, "Transfer")
+      .to.emit(deftLPtoken, "Transfer")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-    expect(await token.allowance(wallet.address, other.address)).to.eq(0n);
-    expect(await token.balanceOf(wallet.address)).to.eq(
+    expect(await deftLPtoken.allowance(wallet.address, other.address)).to.eq(
+      0n,
+    );
+
+    expect(await deftLPtoken.balanceOf(wallet.address)).to.eq(
       TOTAL_SUPPLY - TEST_AMOUNT,
     );
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+
+    expect(await deftLPtoken.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });
 
   it("transferFrom:max", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
 
-    await token.approve(other.address, ethers.MaxUint256);
+    await deftLPtoken.approve(other.address, ethers.MaxUint256);
+
     await expect(
-      token
+      deftLPtoken
         .connect(other)
         .transferFrom(wallet.address, other.address, TEST_AMOUNT),
     )
-      .to.emit(token, "Transfer")
+      .to.emit(deftLPtoken, "Transfer")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-    expect(await token.allowance(wallet.address, other.address)).to.eq(
+
+    expect(await deftLPtoken.allowance(wallet.address, other.address)).to.eq(
       ethers.MaxUint256,
     );
-    expect(await token.balanceOf(wallet.address)).to.eq(
+
+    expect(await deftLPtoken.balanceOf(wallet.address)).to.eq(
       TOTAL_SUPPLY - TEST_AMOUNT,
     );
-    expect(await token.balanceOf(other.address)).to.eq(TEST_AMOUNT);
+
+    expect(await deftLPtoken.balanceOf(other.address)).to.eq(TEST_AMOUNT);
   });
 
   it("permit", async () => {
-    const { token, wallet, other } = await loadFixture(fixture);
-    const nonce = await token.nonces(wallet.address);
     const deadline = ethers.MaxUint256;
+
+    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+
+    const nonce = await deftLPtoken.nonces(wallet.address);
+
     const { chainId } = await wallet.provider.getNetwork();
-    const tokenName = await token.name();
+
+    const deftLPtokenName = await deftLPtoken.name();
 
     const sig = await wallet.signTypedData(
       // "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
       {
-        name: tokenName,
-        version: UniswapVersion,
+        name: deftLPtokenName,
+        version: DEFT_DEX_VERSION,
         chainId: chainId,
-        verifyingContract: await token.getAddress(),
+        verifyingContract: await deftLPtoken.getAddress(),
       },
       // "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
       {
@@ -155,7 +183,7 @@ describe("UniswapV2ERC20", () => {
     const { r, s, v } = ethers.Signature.from(sig);
 
     await expect(
-      token.permit(
+      deftLPtoken.permit(
         wallet.address,
         other.address,
         TEST_AMOUNT,
@@ -165,11 +193,13 @@ describe("UniswapV2ERC20", () => {
         s,
       ),
     )
-      .to.emit(token, "Approval")
+      .to.emit(deftLPtoken, "Approval")
       .withArgs(wallet.address, other.address, TEST_AMOUNT);
-    expect(await token.allowance(wallet.address, other.address)).to.eq(
+
+    expect(await deftLPtoken.allowance(wallet.address, other.address)).to.eq(
       TEST_AMOUNT,
     );
-    expect(await token.nonces(wallet.address)).to.eq(1n);
+
+    expect(await deftLPtoken.nonces(wallet.address)).to.eq(1n);
   });
 });
