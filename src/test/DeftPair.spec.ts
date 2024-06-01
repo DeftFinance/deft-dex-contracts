@@ -38,7 +38,7 @@ describe("DeftPair", () => {
     const token0 = tokenAaddress === token0Address ? tokenA : tokenB;
     const token1 = tokenAaddress === token0Address ? tokenB : tokenA;
 
-    return { wallet, other, deftFactory, token0, token1, deftPair };
+    return { wallet, other, token0, token1, deftFactory, deftPair };
   }
 
   it("mint", async () => {
@@ -504,7 +504,7 @@ describe("DeftPair", () => {
     const expectedOutputAmount = 996006981039903216n;
     const expectedLiquidity = token0Amount;
 
-    const { wallet, other, deftFactory, token0, token1, deftPair } =
+    const { wallet, other, token0, token1, deftFactory, deftPair } =
       await loadFixture(fixture);
 
     await deftFactory.setFeeTo(other.address);
