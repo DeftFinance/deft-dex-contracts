@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.20;
 
-import {UniswapV2ERC20} from "../UniswapV2ERC20.sol";
+import {DeftLPT} from "../DeftLPT.sol";
 
-contract ERC20 is UniswapV2ERC20 {
+contract ERC20 is DeftLPT {
     constructor(uint256 _totalSupply) {
         _mint(msg.sender, _totalSupply);
     }
