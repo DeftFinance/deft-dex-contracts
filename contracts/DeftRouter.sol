@@ -4,7 +4,7 @@ pragma solidity 0.8.20;
 import {IDeftFactory} from "./interfaces/IDeftFactory.sol";
 import {IDeftRouter} from "./interfaces/IDeftRouter.sol";
 import {IDeftPair} from "./interfaces/IDeftPair.sol";
-import {INativeCoin} from "./interfaces/INativeCoin.sol";
+import {IWrappedNativeCoin} from "./interfaces/IWrappedNativeCoin.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
 import {DeftLib} from "./libraries/DeftLib.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
@@ -15,25 +15,25 @@ contract DeftRouter is IDeftRouter {
 
     //solhint-disable-next-line immutable-vars-naming
     address public immutable FACTORY;
-    address public immutable NATIVE_COIN;
+    address public immutable WNC;
 
     modifier ensure(uint256 deadline) {
         require(deadline >= block.timestamp, "DeftRouter: EXPIRED");
         _;
     }
 
-    constructor(address factory, address nativeCoin) {
+    constructor(address factory, address wnc) {
         require(
-            factory != address(0) && nativeCoin != address(nativeCoin),
+            factory != address(0) && wnc != address(wnc),
             "DeftRouter: ZERO_ADDRESS"
         );
 
         FACTORY = factory;
-        NATIVE_COIN = nativeCoin;
+        WNC = wnc;
     }
 
     receive() external payable {
-        assert(msg.sender == NATIVE_COIN); // only accept ETH via fallback from the NATIVE_COIN contract
+        assert(msg.sender == WNC); // only accept ETH via fallback from the WNC contract
     }
 
     function swapExactTokensForTokens(
@@ -84,15 +84,15 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256[] memory amounts) {
-        require(path[0] == NATIVE_COIN, "DeftRouter: INVALID_PATH");
+        require(path[0] == WNC, "DeftRouter: INVALID_PATH");
         amounts = FACTORY.getAmountsOut(msg.value, path);
         require(
             amounts[amounts.length - 1] >= amountOutMin,
             "DeftRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
-        INativeCoin(NATIVE_COIN).deposit{value: amounts[0]}();
+        IWrappedNativeCoin(WNC).deposit{value: amounts[0]}();
         assert(
-            INativeCoin(NATIVE_COIN).transfer(
+            IWrappedNativeCoin(WNC).transfer(
                 FACTORY.pairFor(path[0], path[1]),
                 amounts[0]
             )
@@ -108,7 +108,7 @@ contract DeftRouter is IDeftRouter {
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
         require(
-            path[path.length - 1] == NATIVE_COIN,
+            path[path.length - 1] == WNC,
             "DeftRouter: INVALID_PATH"
         );
         amounts = FACTORY.getAmountsIn(amountOut, path);
@@ -123,7 +123,7 @@ contract DeftRouter is IDeftRouter {
             amounts[0]
         );
         _swap(amounts, path, address(this));
-        INativeCoin(NATIVE_COIN).withdraw(amounts[amounts.length - 1]);
+        IWrappedNativeCoin(WNC).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
@@ -135,7 +135,7 @@ contract DeftRouter is IDeftRouter {
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
         require(
-            path[path.length - 1] == NATIVE_COIN,
+            path[path.length - 1] == WNC,
             "DeftRouter: INVALID_PATH"
         );
         amounts = FACTORY.getAmountsOut(amountIn, path);
@@ -150,7 +150,7 @@ contract DeftRouter is IDeftRouter {
             amounts[0]
         );
         _swap(amounts, path, address(this));
-        INativeCoin(NATIVE_COIN).withdraw(amounts[amounts.length - 1]);
+        IWrappedNativeCoin(WNC).withdraw(amounts[amounts.length - 1]);
         TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
     }
 
@@ -161,12 +161,12 @@ contract DeftRouter is IDeftRouter {
         uint256 deadline
     ) external payable ensure(deadline) returns (uint256[] memory amounts) {
         uint256 value = msg.value;
-        require(path[0] == NATIVE_COIN, "DeftRouter: INVALID_PATH");
+        require(path[0] == WNC, "DeftRouter: INVALID_PATH");
         amounts = FACTORY.getAmountsIn(amountOut, path);
         require(amounts[0] <= value, "DeftRouter: EXCESSIVE_INPUT_AMOUNT");
-        INativeCoin(NATIVE_COIN).deposit{value: amounts[0]}();
+        IWrappedNativeCoin(WNC).deposit{value: amounts[0]}();
         assert(
-            INativeCoin(NATIVE_COIN).transfer(
+            IWrappedNativeCoin(WNC).transfer(
                 FACTORY.pairFor(path[0], path[1]),
                 amounts[0]
             )
@@ -205,11 +205,11 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external payable ensure(deadline) {
-        require(path[0] == NATIVE_COIN, "DeftRouter: INVALID_PATH");
+        require(path[0] == WNC, "DeftRouter: INVALID_PATH");
         uint256 amountIn = msg.value;
-        INativeCoin(NATIVE_COIN).deposit{value: amountIn}();
+        IWrappedNativeCoin(WNC).deposit{value: amountIn}();
         assert(
-            INativeCoin(NATIVE_COIN).transfer(
+            IWrappedNativeCoin(WNC).transfer(
                 FACTORY.pairFor(path[0], path[1]),
                 amountIn
             )
@@ -231,7 +231,7 @@ contract DeftRouter is IDeftRouter {
         uint256 deadline
     ) external ensure(deadline) {
         require(
-            path[path.length - 1] == NATIVE_COIN,
+            path[path.length - 1] == WNC,
             "DeftRouter: INVALID_PATH"
         );
         TransferHelper.safeTransferFrom(
@@ -241,12 +241,12 @@ contract DeftRouter is IDeftRouter {
             amountIn
         );
         _swapSupportingFeeOnTransferTokens(path, address(this));
-        uint256 amountOut = IERC20(NATIVE_COIN).balanceOf(address(this));
+        uint256 amountOut = IERC20(WNC).balanceOf(address(this));
         require(
             amountOut >= amountOutMin,
             "DeftRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
-        INativeCoin(NATIVE_COIN).withdraw(amountOut);
+        IWrappedNativeCoin(WNC).withdraw(amountOut);
         TransferHelper.safeTransferETH(to, amountOut);
     }
 
@@ -303,16 +303,16 @@ contract DeftRouter is IDeftRouter {
         uint256 value = msg.value;
         (amountToken, amountETH) = _addLiquidity(
             token,
-            NATIVE_COIN,
+            WNC,
             amountTokenDesired,
             value,
             amountTokenMin,
             amountETHMin
         );
-        address pair = FACTORY.pairFor(token, NATIVE_COIN);
+        address pair = FACTORY.pairFor(token, WNC);
         TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
-        INativeCoin(NATIVE_COIN).deposit{value: amountETH}();
-        assert(INativeCoin(NATIVE_COIN).transfer(pair, amountETH));
+        IWrappedNativeCoin(WNC).deposit{value: amountETH}();
+        assert(IWrappedNativeCoin(WNC).transfer(pair, amountETH));
         liquidity = IDeftPair(pair).mint(to);
         // refund dust eth, if any
         if (value > amountETH)
@@ -366,7 +366,7 @@ contract DeftRouter is IDeftRouter {
         bytes32 r,
         bytes32 s
     ) external returns (uint256 amountToken, uint256 amountETH) {
-        address pair = FACTORY.pairFor(token, NATIVE_COIN);
+        address pair = FACTORY.pairFor(token, WNC);
         uint256 value = approveMax ? type(uint256).max : liquidity;
         IDeftPair(pair).permit(
             msg.sender,
@@ -399,7 +399,7 @@ contract DeftRouter is IDeftRouter {
         bytes32 r,
         bytes32 s
     ) external returns (uint256 amountETH) {
-        address pair = FACTORY.pairFor(token, NATIVE_COIN);
+        address pair = FACTORY.pairFor(token, WNC);
         uint256 value = approveMax ? type(uint256).max : liquidity;
         IDeftPair(pair).permit(
             msg.sender,
@@ -450,7 +450,7 @@ contract DeftRouter is IDeftRouter {
     ) public ensure(deadline) returns (uint256 amountToken, uint256 amountETH) {
         (amountToken, amountETH) = removeLiquidity(
             token,
-            NATIVE_COIN,
+            WNC,
             liquidity,
             amountTokenMin,
             amountETHMin,
@@ -458,7 +458,7 @@ contract DeftRouter is IDeftRouter {
             deadline
         );
         TransferHelper.safeTransfer(token, to, amountToken);
-        INativeCoin(NATIVE_COIN).withdraw(amountETH);
+        IWrappedNativeCoin(WNC).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
@@ -472,7 +472,7 @@ contract DeftRouter is IDeftRouter {
     ) public ensure(deadline) returns (uint256 amountETH) {
         (, amountETH) = removeLiquidity(
             token,
-            NATIVE_COIN,
+            WNC,
             liquidity,
             amountTokenMin,
             amountETHMin,
@@ -484,7 +484,7 @@ contract DeftRouter is IDeftRouter {
             to,
             IERC20(token).balanceOf(address(this))
         );
-        INativeCoin(NATIVE_COIN).withdraw(amountETH);
+        IWrappedNativeCoin(WNC).withdraw(amountETH);
         TransferHelper.safeTransferETH(to, amountETH);
     }
 
