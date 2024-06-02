@@ -14,12 +14,14 @@ describe("DeftLPT", () => {
     const DEFT_LPT_MOCK = await ethers.getContractFactory("ERC20");
 
     const deftLPtoken = await DEFT_LPT_MOCK.deploy(TOTAL_SUPPLY);
+    const deftLPtokenAddress = await deftLPtoken.getAddress();
 
-    return { wallet, other, deftLPtoken };
+    return { wallet, other, deftLPtoken, deftLPtokenAddress };
   }
 
   it("name, symbol, decimals, totalSupply, balanceOf, DOMAIN_SEPARATOR, PERMIT_TYPEHASH", async () => {
-    const { wallet, deftLPtoken } = await loadFixture(fixture);
+    const { wallet, deftLPtoken, deftLPtokenAddress } =
+      await loadFixture(fixture);
 
     const name = await deftLPtoken.name();
 
@@ -48,7 +50,7 @@ describe("DeftLPT", () => {
             ethers.keccak256(ethers.toUtf8Bytes(name)),
             ethers.keccak256(ethers.toUtf8Bytes(DEFT_DEX_VERSION)),
             chainId,
-            await deftLPtoken.getAddress(),
+            await deftLPtokenAddress,
           ],
         ),
       ),
@@ -149,7 +151,8 @@ describe("DeftLPT", () => {
   it("permit", async () => {
     const deadline = ethers.MaxUint256;
 
-    const { wallet, other, deftLPtoken } = await loadFixture(fixture);
+    const { wallet, other, deftLPtoken, deftLPtokenAddress } =
+      await loadFixture(fixture);
 
     const nonce = await deftLPtoken.nonces(wallet.address);
 
@@ -163,7 +166,7 @@ describe("DeftLPT", () => {
         name: deftLPtokenName,
         version: DEFT_DEX_VERSION,
         chainId: chainId,
-        verifyingContract: await deftLPtoken.getAddress(),
+        verifyingContract: await deftLPtokenAddress,
       },
       // "Permit(address owner,address spender,uint256 value,uint256 nonce,uint256 deadline)"
       {
