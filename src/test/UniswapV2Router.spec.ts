@@ -3,8 +3,8 @@ import { ethers } from "hardhat";
 import { Contract } from "ethers";
 import { loadFixture, time } from "@nomicfoundation/hardhat-network-helpers";
 import {
-  MINIMUM_LIQUIDITY,
   DEFT_DEX_VERSION,
+  MINIMUM_LIQUIDITY,
   TOTAL_SUPPLY,
 } from "./shared/constants";
 import { expandTo18Decimals } from "./shared/utilities";
