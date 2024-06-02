@@ -116,14 +116,19 @@ describe("DeftRouter", () => {
 
   it("quote", async () => {
     const { deftRouter } = await loadFixture(fixture);
+
     expect(await deftRouter.quote(1n, 100n, 200n)).to.eq(2n);
+
     expect(await deftRouter.quote(2n, 200n, 100n)).to.eq(1n);
+
     await expect(deftRouter.quote(0n, 100n, 200n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_AMOUNT",
     );
+
     await expect(deftRouter.quote(1n, 0n, 200n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
+
     await expect(deftRouter.quote(1n, 100n, 0n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
@@ -133,12 +138,15 @@ describe("DeftRouter", () => {
     const { deftRouter } = await loadFixture(fixture);
 
     expect(await deftRouter.getAmountOut(2n, 100n, 100n)).to.eq(1n);
+
     await expect(deftRouter.getAmountOut(0n, 100n, 100n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_INPUT_AMOUNT",
     );
+
     await expect(deftRouter.getAmountOut(2n, 0n, 100n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
+
     await expect(deftRouter.getAmountOut(2n, 100n, 0n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
@@ -148,12 +156,15 @@ describe("DeftRouter", () => {
     const { deftRouter } = await loadFixture(fixture);
 
     expect(await deftRouter.getAmountIn(1n, 100n, 100n)).to.eq(2n);
+
     await expect(deftRouter.getAmountIn(0n, 100n, 100n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_OUTPUT_AMOUNT",
     );
+
     await expect(deftRouter.getAmountIn(1n, 0n, 100n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
+
     await expect(deftRouter.getAmountIn(1n, 100n, 0n)).to.be.revertedWith(
       "DeftLib: INSUFFICIENT_LIQUIDITY",
     );
@@ -170,8 +181,11 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
+    const path = [token0Address, token1Address];
+
     await token0.approve(deftRouterAddress, ethers.MaxUint256);
     await token1.approve(deftRouterAddress, ethers.MaxUint256);
+
     await deftRouter.addLiquidity(
       token0Address,
       token1Address,
@@ -186,7 +200,7 @@ describe("DeftRouter", () => {
     await expect(
       deftRouter.getAmountsOut(2n, [token0Address]),
     ).to.be.revertedWith("DeftLib: INVALID_PATH");
-    const path = [token0Address, token1Address];
+
     expect(await deftRouter.getAmountsOut(2n, path)).to.deep.eq([2n, 1n]);
   });
 
@@ -201,8 +215,11 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
+    const path = [token0Address, token1Address];
+
     await token0.approve(deftRouterAddress, ethers.MaxUint256);
     await token1.approve(deftRouterAddress, ethers.MaxUint256);
+
     await deftRouter.addLiquidity(
       token0Address,
       token1Address,
@@ -217,18 +234,24 @@ describe("DeftRouter", () => {
     await expect(
       deftRouter.getAmountsIn(1n, [token0Address]),
     ).to.be.revertedWith("DeftLib: INVALID_PATH");
-    const path = [token0Address, token1Address];
+
     expect(await deftRouter.getAmountsIn(1n, path)).to.deep.eq([2n, 1n]);
   });
 
   it("factory, WETH", async () => {
     const { deftRouter, WETHAddress, deftFactoryAddress } =
       await loadFixture(fixture);
-    expect(await deftRouter.FACTORY()).to.eq(deftFactoryAddress);
+
     expect(await deftRouter.WNC()).to.eq(WETHAddress);
+
+    expect(await deftRouter.FACTORY()).to.eq(deftFactoryAddress);
   });
 
   it("addLiquidity", async () => {
+    const token0Amount = expandTo18Decimals(1);
+    const token1Amount = expandTo18Decimals(4);
+    const expectedLiquidity = expandTo18Decimals(2);
+
     const {
       wallet,
       token0,
@@ -241,12 +264,9 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
-    const token0Amount = expandTo18Decimals(1);
-    const token1Amount = expandTo18Decimals(4);
-
-    const expectedLiquidity = expandTo18Decimals(2);
     await token0.approve(deftRouterAddress, ethers.MaxUint256);
     await token1.approve(deftRouterAddress, ethers.MaxUint256);
+
     await expect(
       deftRouter.addLiquidity(
         token0Address,
@@ -282,6 +302,10 @@ describe("DeftRouter", () => {
   });
 
   it("removeLiquidity", async () => {
+    const token0Amount = expandTo18Decimals(1);
+    const token1Amount = expandTo18Decimals(4);
+    const expectedLiquidity = expandTo18Decimals(2);
+
     const {
       wallet,
       token0,
@@ -294,14 +318,13 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
-    const token0Amount = expandTo18Decimals(1);
-    const token1Amount = expandTo18Decimals(4);
     await token0.transfer(deftPairAddress, token0Amount);
     await token1.transfer(deftPairAddress, token1Amount);
+
     await deftPair.mint(wallet.address);
 
-    const expectedLiquidity = expandTo18Decimals(2);
     await deftPair.approve(deftRouterAddress, ethers.MaxUint256);
+
     await expect(
       deftRouter.removeLiquidity(
         token0Address,
@@ -340,8 +363,10 @@ describe("DeftRouter", () => {
       );
 
     expect(await deftPair.balanceOf(wallet.address)).to.eq(0);
+
     const totalSupplyToken0 = await token0.totalSupply();
     const totalSupplyToken1 = await token1.totalSupply();
+
     expect(await token0.balanceOf(wallet.address)).to.eq(
       totalSupplyToken0 - 500n,
     );
@@ -351,6 +376,10 @@ describe("DeftRouter", () => {
   });
 
   it("removeLiquidityETH", async () => {
+    const ETHAmount = expandTo18Decimals(4);
+    const WETHPartnerAmount = expandTo18Decimals(1);
+    const expectedLiquidity = expandTo18Decimals(2);
+
     const {
       wallet,
       WETH,
@@ -362,16 +391,17 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
-    const WETHPartnerAmount = expandTo18Decimals(1);
-    const ETHAmount = expandTo18Decimals(4);
-    await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
     await WETH.deposit({ value: ETHAmount });
+
     await WETH.transfer(WETHPairAddress, ETHAmount);
+    await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
     await WETHPair.mint(wallet.address);
 
-    const expectedLiquidity = expandTo18Decimals(2);
     const WETHPairToken0 = await WETHPair.token0();
+
     await WETHPair.approve(deftRouterAddress, ethers.MaxUint256);
+
     await expect(
       deftRouter.removeLiquidityETH(
         WETHPartnerAddress,
@@ -418,15 +448,21 @@ describe("DeftRouter", () => {
       );
 
     expect(await WETHPair.balanceOf(wallet.address)).to.eq(0);
-    const totalSupplyWETHPartner = await WETHPartner.totalSupply();
+
     const totalSupplyWETH = await WETH.totalSupply();
+    const totalSupplyWETHPartner = await WETHPartner.totalSupply();
+
+    expect(await WETH.balanceOf(wallet.address)).to.eq(totalSupplyWETH - 2000n);
     expect(await WETHPartner.balanceOf(wallet.address)).to.eq(
       totalSupplyWETHPartner - 500n,
     );
-    expect(await WETH.balanceOf(wallet.address)).to.eq(totalSupplyWETH - 2000n);
   });
 
   it("removeLiquidityWithPermit", async () => {
+    const token0Amount = expandTo18Decimals(1);
+    const token1Amount = expandTo18Decimals(4);
+    const expectedLiquidity = expandTo18Decimals(2);
+
     const {
       wallet,
       token0,
@@ -439,17 +475,17 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
-    const token0Amount = expandTo18Decimals(1);
-    const token1Amount = expandTo18Decimals(4);
     await token0.transfer(deftPairAddress, token0Amount);
     await token1.transfer(deftPairAddress, token1Amount);
+
     await deftPair.mint(wallet.address);
 
-    const expectedLiquidity = expandTo18Decimals(2);
-
     const nonce = await deftPair.nonces(wallet.address);
+
     const tokenName = await deftPair.name();
+
     const { chainId } = await wallet.provider.getNetwork();
+
     const sig = await wallet.signTypedData(
       // "EIP712Domain(string name,string version,uint256 chainId,address verifyingContract)"
       {
@@ -495,6 +531,10 @@ describe("DeftRouter", () => {
   });
 
   it("removeLiquidityETHWithPermit", async () => {
+    const ETHAmount = expandTo18Decimals(4);
+    const WETHPartnerAmount = expandTo18Decimals(1);
+    const expectedLiquidity = expandTo18Decimals(2);
+
     const {
       wallet,
       WETH,
@@ -506,14 +546,12 @@ describe("DeftRouter", () => {
       deftRouterAddress,
     } = await loadFixture(fixture);
 
-    const WETHPartnerAmount = expandTo18Decimals(1);
-    const ETHAmount = expandTo18Decimals(4);
-    await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
     await WETH.deposit({ value: ETHAmount });
-    await WETH.transfer(WETHPairAddress, ETHAmount);
-    await WETHPair.mint(wallet.address);
 
-    const expectedLiquidity = expandTo18Decimals(2);
+    await WETH.transfer(WETHPairAddress, ETHAmount);
+    await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
+    await WETHPair.mint(wallet.address);
 
     const nonce = await WETHPair.nonces(wallet.address);
 
@@ -585,6 +623,7 @@ describe("DeftRouter", () => {
       // before each
       await token0.transfer(deftPairAddress, token0Amount);
       await token1.transfer(deftPairAddress, token1Amount);
+
       await deftPair.mint(wallet.address);
 
       await token0.approve(deftRouterAddress, ethers.MaxUint256);
@@ -635,10 +674,13 @@ describe("DeftRouter", () => {
       // before each
       await token0.transfer(deftPairAddress, token0Amount);
       await token1.transfer(deftPairAddress, token1Amount);
+
       await deftPair.mint(wallet.address);
+
       await token0.approve(deftRouterAddress, ethers.MaxUint256);
 
       await token0.approve(routerEmitAddress, ethers.MaxUint256);
+
       await expect(
         routerEmit.swapExactTokensForTokens(
           deftRouterAddress,
@@ -669,19 +711,24 @@ describe("DeftRouter", () => {
       // before each
       await token0.transfer(deftPairAddress, token0Amount);
       await token1.transfer(deftPairAddress, token1Amount);
+
       await deftPair.mint(wallet.address);
+
       await token0.approve(deftRouterAddress, ethers.MaxUint256);
 
       // ensure that setting price{0,1}CumulativeLast for the first time doesn't affect our gas math
       await time.setNextBlockTimestamp(
         (await ethers.provider.getBlock("latest"))!.timestamp + 1,
       );
+
       await deftPair.sync();
 
       await token0.approve(deftRouterAddress, ethers.MaxUint256);
+
       await time.setNextBlockTimestamp(
         (await ethers.provider.getBlock("latest"))!.timestamp + 1,
       );
+
       const tx = await deftRouter.swapExactTokensForTokens(
         swapAmount,
         0,
@@ -689,7 +736,9 @@ describe("DeftRouter", () => {
         wallet.address,
         ethers.MaxUint256,
       );
+
       const receipt = await tx.wait();
+
       expect(receipt!.gasUsed).to.eq(101097, "gas used");
     });
   });
@@ -716,9 +765,11 @@ describe("DeftRouter", () => {
       // before each
       await token0.transfer(deftPairAddress, token0Amount);
       await token1.transfer(deftPairAddress, token1Amount);
+
       await deftPair.mint(wallet.address);
 
       await token0.approve(deftRouterAddress, ethers.MaxUint256);
+
       await expect(
         deftRouter.swapTokensForExactTokens(
           outputAmount,
@@ -765,9 +816,11 @@ describe("DeftRouter", () => {
       // before each
       await token0.transfer(deftPairAddress, token0Amount);
       await token1.transfer(deftPairAddress, token1Amount);
+
       await deftPair.mint(wallet.address);
 
       await token0.approve(routerEmitAddress, ethers.MaxUint256);
+
       await expect(
         routerEmit.swapTokensForExactTokens(
           deftRouterAddress,
@@ -784,8 +837,8 @@ describe("DeftRouter", () => {
   });
 
   describe("swapExactETHForTokens", () => {
-    const WETHPartnerAmount = expandTo18Decimals(10);
     const ETHAmount = expandTo18Decimals(5);
+    const WETHPartnerAmount = expandTo18Decimals(10);
     const swapAmount = expandTo18Decimals(1);
     const expectedOutputAmount = 1662497915624478906n;
 
@@ -794,7 +847,7 @@ describe("DeftRouter", () => {
         wallet,
         WETH,
         WETHPartner,
-        // token0,
+        token0,
         WETHPair,
         deftRouter,
         WETHAddress,
@@ -803,20 +856,24 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       // before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
-      //? whats this?
-      // await token0.approve(deftRouterAddress, ethers.MaxUint256);
+      await token0.approve(deftRouterAddress, ethers.MaxUint256);
 
       const WETHPairToken0 = await WETHPair.token0();
+
       await expect(
         deftRouter.swapExactETHForTokens(
           0,
-          [WETHAddress, WETHPartnerAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
           {
@@ -853,7 +910,7 @@ describe("DeftRouter", () => {
         wallet,
         WETH,
         WETHPartner,
-        // token0,
+        token0,
         WETHPair,
         routerEmit,
         WETHAddress,
@@ -862,20 +919,23 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       // before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
-      //? Again, WTF is this?
-      // await token0.approve(deftRouterAddress, ethers.MaxUint256);
+      await token0.approve(deftRouterAddress, ethers.MaxUint256);
 
       await expect(
         routerEmit.swapExactETHForTokens(
           deftRouterAddress,
           0,
-          [WETHAddress, WETHPartnerAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
           {
@@ -888,59 +948,66 @@ describe("DeftRouter", () => {
     });
 
     it("gas", async () => {
+      const ETHAmount = expandTo18Decimals(5);
+      const WETHPartnerAmount = expandTo18Decimals(10);
+      const swapAmount = expandTo18Decimals(1);
+
       const {
         wallet,
         WETH,
         WETHPartner,
-        // token0,
+        token0,
         WETHPair,
         deftPair,
         deftRouter,
         WETHAddress,
         WETHPartnerAddress,
         WETHPairAddress,
-        // deftRouterAddress,
+        deftRouterAddress,
       } = await loadFixture(fixture);
 
-      const WETHPartnerAmount = expandTo18Decimals(10);
-      const ETHAmount = expandTo18Decimals(5);
+      const path = [WETHAddress, WETHPartnerAddress];
 
       // before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
-      //! :|
-      // await token0.approve(deftRouterAddress, ethers.MaxUint256);
+      await token0.approve(deftRouterAddress, ethers.MaxUint256);
 
       // ensure that setting price{0,1}CumulativeLast for the first time doesn't affect our gas math
       await time.setNextBlockTimestamp(
         (await wallet.provider.getBlock("latest"))!.timestamp + 1,
       );
+
       await deftPair.sync();
 
-      const swapAmount = expandTo18Decimals(1);
       await time.setNextBlockTimestamp(
         (await wallet.provider.getBlock("latest"))!.timestamp + 1,
       );
+
       const tx = await deftRouter.swapExactETHForTokens(
         0,
-        [WETHAddress, WETHPartnerAddress],
+        path,
         wallet.address,
         ethers.MaxUint256,
         {
           value: swapAmount,
         },
       );
+
       const receipt = await tx.wait();
+
       expect(receipt!.gasUsed).to.eq(138689, "gas used");
     }).retries(3);
   });
 
   describe("swapTokensForExactETH", () => {
-    const WETHPartnerAmount = expandTo18Decimals(5);
     const ETHAmount = expandTo18Decimals(10);
+    const WETHPartnerAmount = expandTo18Decimals(5);
     const expectedSwapAmount = 557227237267357629n;
     const outputAmount = expandTo18Decimals(1);
 
@@ -957,19 +1024,25 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       // before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       await WETHPartner.approve(deftRouterAddress, ethers.MaxUint256);
+
       const WETHPairToken0 = await WETHPair.token0();
+
       await expect(
         deftRouter.swapTokensForExactETH(
           outputAmount,
           ethers.MaxUint256,
-          [WETHPartnerAddress, WETHAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
         ),
@@ -1012,19 +1085,24 @@ describe("DeftRouter", () => {
         routerEmitAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       // before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       await WETHPartner.approve(routerEmitAddress, ethers.MaxUint256);
+
       await expect(
         routerEmit.swapTokensForExactETH(
           deftRouterAddress,
           outputAmount,
           ethers.MaxUint256,
-          [WETHPartnerAddress, WETHAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
         ),
@@ -1035,8 +1113,8 @@ describe("DeftRouter", () => {
   });
 
   describe("swapExactTokensForETH", () => {
-    const WETHPartnerAmount = expandTo18Decimals(5);
     const ETHAmount = expandTo18Decimals(10);
+    const WETHPartnerAmount = expandTo18Decimals(5);
     const swapAmount = expandTo18Decimals(1);
     const expectedOutputAmount = 1662497915624478906n;
 
@@ -1053,19 +1131,25 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       //before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       await WETHPartner.approve(deftRouterAddress, ethers.MaxUint256);
+
       const WETHPairToken0 = await WETHPair.token0();
+
       await expect(
         deftRouter.swapExactTokensForETH(
           swapAmount,
           0,
-          [WETHPartnerAddress, WETHAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
         ),
@@ -1108,19 +1192,24 @@ describe("DeftRouter", () => {
         routerEmitAddress,
       } = await loadFixture(fixture);
 
+      const path = [WETHAddress, WETHPartnerAddress];
+
       //before each
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       await WETHPartner.approve(routerEmitAddress, ethers.MaxUint256);
+
       await expect(
         routerEmit.swapExactTokensForETH(
           deftRouterAddress,
           swapAmount,
           0,
-          [WETHPartnerAddress, WETHAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
         ),
@@ -1131,8 +1220,8 @@ describe("DeftRouter", () => {
   });
 
   describe("swapETHForExactTokens", () => {
-    const WETHPartnerAmount = expandTo18Decimals(10);
     const ETHAmount = expandTo18Decimals(5);
+    const WETHPartnerAmount = expandTo18Decimals(10);
     const expectedSwapAmount = 557227237267357629n;
     const outputAmount = expandTo18Decimals(1);
 
@@ -1149,16 +1238,21 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+      const path = [WETHAddress, WETHPartnerAddress];
+
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       const WETHPairToken0 = await WETHPair.token0();
+
       await expect(
         deftRouter.swapETHForExactTokens(
           outputAmount,
-          [WETHAddress, WETHPartnerAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
           {
@@ -1203,16 +1297,20 @@ describe("DeftRouter", () => {
         deftRouterAddress,
       } = await loadFixture(fixture);
 
-      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+      const path = [WETHAddress, WETHPartnerAddress];
+
       await WETH.deposit({ value: ETHAmount });
+
       await WETH.transfer(WETHPairAddress, ETHAmount);
+      await WETHPartner.transfer(WETHPairAddress, WETHPartnerAmount);
+
       await WETHPair.mint(wallet.address);
 
       await expect(
         routerEmit.swapETHForExactTokens(
           deftRouterAddress,
           outputAmount,
-          [WETHAddress, WETHPartnerAddress],
+          path,
           wallet.address,
           ethers.MaxUint256,
           {
