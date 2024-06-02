@@ -14,6 +14,7 @@ describe("DeftLPT", () => {
     const DEFT_LPT_MOCK = await ethers.getContractFactory("ERC20");
 
     const deftLPtoken = await DEFT_LPT_MOCK.deploy(TOTAL_SUPPLY);
+
     const deftLPtokenAddress = await deftLPtoken.getAddress();
 
     return { wallet, other, deftLPtoken, deftLPtokenAddress };
