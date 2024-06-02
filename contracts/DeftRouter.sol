@@ -6,10 +6,11 @@ import {IDeftRouter} from "./interfaces/IDeftRouter.sol";
 import {IDeftPair} from "./interfaces/IDeftPair.sol";
 import {IWrappedNativeCoin} from "./interfaces/IWrappedNativeCoin.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
-import {DeftLib} from "./libraries/DeftLib.sol";
 import {TransferHelper} from "./libraries/TransferHelper.sol";
+import {DeftLib} from "./libraries/DeftLib.sol";
 
 contract DeftRouter is IDeftRouter {
+    using TransferHelper for address;
     using DeftLib for address;
     using DeftLib for uint256;
 
@@ -48,8 +49,7 @@ contract DeftRouter is IDeftRouter {
             amounts[amounts.length - 1] >= amountOutMin,
             "DeftRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
-        TransferHelper.safeTransferFrom(
-            path[0],
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amounts[0]
@@ -69,8 +69,7 @@ contract DeftRouter is IDeftRouter {
             amounts[0] <= amountInMax,
             "DeftRouter: EXCESSIVE_INPUT_AMOUNT"
         );
-        TransferHelper.safeTransferFrom(
-            path[0],
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amounts[0]
@@ -107,24 +106,20 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
-        require(
-            path[path.length - 1] == WNC,
-            "DeftRouter: INVALID_PATH"
-        );
+        require(path[path.length - 1] == WNC, "DeftRouter: INVALID_PATH");
         amounts = FACTORY.getAmountsIn(amountOut, path);
         require(
             amounts[0] <= amountInMax,
             "DeftRouter: EXCESSIVE_INPUT_AMOUNT"
         );
-        TransferHelper.safeTransferFrom(
-            path[0],
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, address(this));
         IWrappedNativeCoin(WNC).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        to.safeTransferETH(amounts[amounts.length - 1]);
     }
 
     function swapExactTokensForETH(
@@ -134,24 +129,20 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external ensure(deadline) returns (uint256[] memory amounts) {
-        require(
-            path[path.length - 1] == WNC,
-            "DeftRouter: INVALID_PATH"
-        );
+        require(path[path.length - 1] == WNC, "DeftRouter: INVALID_PATH");
         amounts = FACTORY.getAmountsOut(amountIn, path);
         require(
             amounts[amounts.length - 1] >= amountOutMin,
             "DeftRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
-        TransferHelper.safeTransferFrom(
-            path[0],
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amounts[0]
         );
         _swap(amounts, path, address(this));
         IWrappedNativeCoin(WNC).withdraw(amounts[amounts.length - 1]);
-        TransferHelper.safeTransferETH(to, amounts[amounts.length - 1]);
+        to.safeTransferETH(amounts[amounts.length - 1]);
     }
 
     function swapETHForExactTokens(
@@ -174,7 +165,7 @@ contract DeftRouter is IDeftRouter {
         _swap(amounts, path, to);
         // refund dust eth, if any
         if (value > amounts[0])
-            TransferHelper.safeTransferETH(msg.sender, value - amounts[0]);
+            (msg.sender).safeTransferETH(value - amounts[0]);
     }
 
     function swapExactTokensForTokensSupportingFeeOnTransferTokens(
@@ -184,8 +175,7 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external ensure(deadline) {
-        TransferHelper.safeTransferFrom(
-            path[0],
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amountIn
@@ -230,12 +220,8 @@ contract DeftRouter is IDeftRouter {
         address to,
         uint256 deadline
     ) external ensure(deadline) {
-        require(
-            path[path.length - 1] == WNC,
-            "DeftRouter: INVALID_PATH"
-        );
-        TransferHelper.safeTransferFrom(
-            path[0],
+        require(path[path.length - 1] == WNC, "DeftRouter: INVALID_PATH");
+        path[0].safeTransferFrom(
             msg.sender,
             FACTORY.pairFor(path[0], path[1]),
             amountIn
@@ -247,7 +233,7 @@ contract DeftRouter is IDeftRouter {
             "DeftRouter: INSUFFICIENT_OUTPUT_AMOUNT"
         );
         IWrappedNativeCoin(WNC).withdraw(amountOut);
-        TransferHelper.safeTransferETH(to, amountOut);
+        to.safeTransferETH(amountOut);
     }
 
     function addLiquidity(
@@ -310,13 +296,12 @@ contract DeftRouter is IDeftRouter {
             amountETHMin
         );
         address pair = FACTORY.pairFor(token, WNC);
-        TransferHelper.safeTransferFrom(token, msg.sender, pair, amountToken);
+        token.safeTransferFrom(msg.sender, pair, amountToken);
         IWrappedNativeCoin(WNC).deposit{value: amountETH}();
         assert(IWrappedNativeCoin(WNC).transfer(pair, amountETH));
         liquidity = IDeftPair(pair).mint(to);
         // refund dust eth, if any
-        if (value > amountETH)
-            TransferHelper.safeTransferETH(msg.sender, value - amountETH);
+        if (value > amountETH) (msg.sender).safeTransferETH(value - amountETH);
     }
 
     function removeLiquidityWithPermit(
@@ -457,9 +442,9 @@ contract DeftRouter is IDeftRouter {
             address(this),
             deadline
         );
-        TransferHelper.safeTransfer(token, to, amountToken);
+        token.safeTransfer(to, amountToken);
         IWrappedNativeCoin(WNC).withdraw(amountETH);
-        TransferHelper.safeTransferETH(to, amountETH);
+        to.safeTransferETH(amountETH);
     }
 
     function removeLiquidityETHSupportingFeeOnTransferTokens(
@@ -479,13 +464,9 @@ contract DeftRouter is IDeftRouter {
             address(this),
             deadline
         );
-        TransferHelper.safeTransfer(
-            token,
-            to,
-            IERC20(token).balanceOf(address(this))
-        );
+        token.safeTransfer(to, IERC20(token).balanceOf(address(this)));
         IWrappedNativeCoin(WNC).withdraw(amountETH);
-        TransferHelper.safeTransferETH(to, amountETH);
+        to.safeTransferETH(amountETH);
     }
 
     function getAmountsOut(uint256 amountIn, address[] memory path)
