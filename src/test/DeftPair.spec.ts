@@ -33,12 +33,22 @@ describe("DeftPair", () => {
       await deftFactory.getPair(tokenAaddress, tokenBaddress),
     ) as DeftPair;
 
+    const deftPairAddress = await deftPair.getAddress();
+
     const token0Address = await deftPair.token0();
 
     const token0 = tokenAaddress === token0Address ? tokenA : tokenB;
     const token1 = tokenAaddress === token0Address ? tokenB : tokenA;
 
-    return { wallet, other, token0, token1, deftFactory, deftPair };
+    return {
+      wallet,
+      other,
+      token0,
+      token1,
+      deftFactory,
+      deftPair,
+      deftPairAddress,
+    };
   }
 
   it("mint", async () => {
@@ -46,10 +56,11 @@ describe("DeftPair", () => {
     const token1Amount = expandTo18Decimals(4);
     const expectedLiquidity = expandTo18Decimals(2);
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
-    await token0.transfer(await deftPair.getAddress(), token0Amount);
-    await token1.transfer(await deftPair.getAddress(), token1Amount);
+    await token0.transfer(deftPairAddress, token0Amount);
+    await token1.transfer(deftPairAddress, token1Amount);
 
     await expect(deftPair.mint(wallet.address))
       .to.emit(deftPair, "Transfer")
@@ -71,12 +82,8 @@ describe("DeftPair", () => {
       expectedLiquidity - MINIMUM_LIQUIDITY,
     );
 
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(
-      token0Amount,
-    );
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(
-      token1Amount,
-    );
+    expect(await token0.balanceOf(deftPairAddress)).to.eq(token0Amount);
+    expect(await token1.balanceOf(deftPairAddress)).to.eq(token1Amount);
 
     const deftPairReserves = await deftPair.getReserves();
 
@@ -88,12 +95,11 @@ describe("DeftPair", () => {
     token0: ERC20,
     token1: ERC20,
     deftPair: DeftPair,
+    deftPairAddress: string,
     wallet: HardhatEthersSigner,
     token0Amount: bigint,
     token1Amount: bigint,
   ) {
-    const deftPairAddress = await deftPair.getAddress();
-
     await token0.transfer(deftPairAddress, token0Amount);
     await token1.transfer(deftPairAddress, token1Amount);
 
@@ -117,18 +123,20 @@ describe("DeftPair", () => {
       const [swapAmount, token0Amount, token1Amount, expectedOutputAmount] =
         swapTestCase;
 
-      const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+      const { wallet, token0, token1, deftPair, deftPairAddress } =
+        await loadFixture(fixture);
 
       await addLiquidity(
         token0,
         token1,
         deftPair,
+        deftPairAddress,
         wallet,
         token0Amount,
         token1Amount,
       );
 
-      await token0.transfer(await deftPair.getAddress(), swapAmount);
+      await token0.transfer(deftPairAddress, swapAmount);
 
       await expect(
         deftPair.swap(0, expectedOutputAmount + 1n, wallet.address, "0x"),
@@ -152,18 +160,20 @@ describe("DeftPair", () => {
       const [outputAmount, token0Amount, token1Amount, inputAmount] =
         optimisticTestCase;
 
-      const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+      const { wallet, token0, token1, deftPair, deftPairAddress } =
+        await loadFixture(fixture);
 
       await addLiquidity(
         token0,
         token1,
         deftPair,
+        deftPairAddress,
         wallet,
         token0Amount,
         token1Amount,
       );
 
-      await token0.transfer(await deftPair.getAddress(), inputAmount);
+      await token0.transfer(deftPairAddress, inputAmount);
 
       await expect(
         deftPair.swap(outputAmount + 1n, 0n, wallet.address, "0x"),
@@ -179,26 +189,24 @@ describe("DeftPair", () => {
     const swapAmount = expandTo18Decimals(1);
     const expectedOutputAmount = 1662497915624478906n;
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
     );
 
-    await token0.transfer(await deftPair.getAddress(), swapAmount);
+    await token0.transfer(deftPairAddress, swapAmount);
 
     await expect(deftPair.swap(0, expectedOutputAmount, wallet.address, "0x"))
       .to.emit(token1, "Transfer")
-      .withArgs(
-        await deftPair.getAddress(),
-        wallet.address,
-        expectedOutputAmount,
-      )
+      .withArgs(deftPairAddress, wallet.address, expectedOutputAmount)
       .to.emit(deftPair, "Sync")
       .withArgs(token0Amount + swapAmount, token1Amount - expectedOutputAmount)
       .to.emit(deftPair, "Swap")
@@ -216,10 +224,10 @@ describe("DeftPair", () => {
     expect(deftPairReserves[0]).to.eq(token0Amount + swapAmount);
     expect(deftPairReserves[1]).to.eq(token1Amount - expectedOutputAmount);
 
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token0.balanceOf(deftPairAddress)).to.eq(
       token0Amount + swapAmount,
     );
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token1.balanceOf(deftPairAddress)).to.eq(
       token1Amount - expectedOutputAmount,
     );
 
@@ -240,26 +248,24 @@ describe("DeftPair", () => {
     const swapAmount = expandTo18Decimals(1);
     const expectedOutputAmount = 453305446940074565n;
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
     );
 
-    await token1.transfer(await deftPair.getAddress(), swapAmount);
+    await token1.transfer(deftPairAddress, swapAmount);
 
     await expect(deftPair.swap(expectedOutputAmount, 0, wallet.address, "0x"))
       .to.emit(token0, "Transfer")
-      .withArgs(
-        await deftPair.getAddress(),
-        wallet.address,
-        expectedOutputAmount,
-      )
+      .withArgs(deftPairAddress, wallet.address, expectedOutputAmount)
       .to.emit(deftPair, "Sync")
       .withArgs(token0Amount - expectedOutputAmount, token1Amount + swapAmount)
       .to.emit(deftPair, "Swap")
@@ -277,10 +283,10 @@ describe("DeftPair", () => {
     expect(deftPairReserves[0]).to.eq(token0Amount - expectedOutputAmount);
     expect(deftPairReserves[1]).to.eq(token1Amount + swapAmount);
 
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token0.balanceOf(deftPairAddress)).to.eq(
       token0Amount - expectedOutputAmount,
     );
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token1.balanceOf(deftPairAddress)).to.eq(
       token1Amount + swapAmount,
     );
 
@@ -301,12 +307,14 @@ describe("DeftPair", () => {
     const swapAmount = expandTo18Decimals(1);
     const expectedOutputAmount = 453305446940074565n;
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
@@ -323,7 +331,7 @@ describe("DeftPair", () => {
 
     await deftPair.sync();
 
-    await token1.transfer(await deftPair.getAddress(), swapAmount);
+    await token1.transfer(deftPairAddress, swapAmount);
 
     await time.setNextBlockTimestamp(
       (await wallet.provider.getBlock("latest"))!.timestamp + 1,
@@ -346,41 +354,35 @@ describe("DeftPair", () => {
     const token1Amount = token0Amount;
     const expectedLiquidity = token0Amount;
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
     );
 
     await deftPair.transfer(
-      await deftPair.getAddress(),
+      deftPairAddress,
       expectedLiquidity - MINIMUM_LIQUIDITY,
     );
 
     await expect(deftPair.burn(wallet.address))
       .to.emit(deftPair, "Transfer")
       .withArgs(
-        await deftPair.getAddress(),
+        deftPairAddress,
         ethers.ZeroAddress,
         expectedLiquidity - MINIMUM_LIQUIDITY,
       )
       .to.emit(token0, "Transfer")
-      .withArgs(
-        await deftPair.getAddress(),
-        wallet.address,
-        token0Amount - 1000n,
-      )
+      .withArgs(deftPairAddress, wallet.address, token0Amount - 1000n)
       .to.emit(token1, "Transfer")
-      .withArgs(
-        await deftPair.getAddress(),
-        wallet.address,
-        token1Amount - 1000n,
-      )
+      .withArgs(deftPairAddress, wallet.address, token1Amount - 1000n)
       .to.emit(deftPair, "Sync")
       .withArgs(1000, 1000)
       .to.emit(deftPair, "Burn")
@@ -395,8 +397,8 @@ describe("DeftPair", () => {
 
     expect(await deftPair.totalSupply()).to.eq(MINIMUM_LIQUIDITY);
 
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(1000);
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(1000);
+    expect(await token0.balanceOf(deftPairAddress)).to.eq(1000);
+    expect(await token1.balanceOf(deftPairAddress)).to.eq(1000);
 
     const totalSupplyToken0 = await token0.totalSupply();
     const totalSupplyToken1 = await token1.totalSupply();
@@ -415,12 +417,14 @@ describe("DeftPair", () => {
     const swapAmount = token0Amount;
     const initialPrice = encodePrice(token0Amount, token1Amount);
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
@@ -437,7 +441,7 @@ describe("DeftPair", () => {
 
     expect((await deftPair.getReserves())[2]).to.eq(blockTimestamp + 1n);
 
-    await token0.transfer(await deftPair.getAddress(), swapAmount);
+    await token0.transfer(deftPairAddress, swapAmount);
 
     await time.setNextBlockTimestamp(blockTimestamp + 10n);
 
@@ -472,23 +476,25 @@ describe("DeftPair", () => {
     const expectedOutputAmount = 996006981039903216n;
     const expectedLiquidity = token0Amount;
 
-    const { wallet, token0, token1, deftPair } = await loadFixture(fixture);
+    const { wallet, token0, token1, deftPair, deftPairAddress } =
+      await loadFixture(fixture);
 
     await addLiquidity(
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
     );
 
-    await token1.transfer(await deftPair.getAddress(), swapAmount);
+    await token1.transfer(deftPairAddress, swapAmount);
 
     await deftPair.swap(expectedOutputAmount, 0, wallet.address, "0x");
 
     await deftPair.transfer(
-      await deftPair.getAddress(),
+      deftPairAddress,
       expectedLiquidity - MINIMUM_LIQUIDITY,
     );
 
@@ -504,8 +510,15 @@ describe("DeftPair", () => {
     const expectedOutputAmount = 996006981039903216n;
     const expectedLiquidity = token0Amount;
 
-    const { wallet, other, token0, token1, deftFactory, deftPair } =
-      await loadFixture(fixture);
+    const {
+      wallet,
+      other,
+      token0,
+      token1,
+      deftFactory,
+      deftPair,
+      deftPairAddress,
+    } = await loadFixture(fixture);
 
     await deftFactory.setFeeTo(other.address);
 
@@ -513,17 +526,18 @@ describe("DeftPair", () => {
       token0,
       token1,
       deftPair,
+      deftPairAddress,
       wallet,
       token0Amount,
       token1Amount,
     );
 
-    await token1.transfer(await deftPair.getAddress(), swapAmount);
+    await token1.transfer(deftPairAddress, swapAmount);
 
     await deftPair.swap(expectedOutputAmount, 0, wallet.address, "0x");
 
     await deftPair.transfer(
-      await deftPair.getAddress(),
+      deftPairAddress,
       expectedLiquidity - MINIMUM_LIQUIDITY,
     );
 
@@ -537,10 +551,10 @@ describe("DeftPair", () => {
 
     // using 1000 here instead of the symbolic MINIMUM_LIQUIDITY because the amounts only happen to be equal...
     // ...because the initial liquidity amounts were equal
-    expect(await token0.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token0.balanceOf(deftPairAddress)).to.eq(
       1000n + 249501683697445n,
     );
-    expect(await token1.balanceOf(await deftPair.getAddress())).to.eq(
+    expect(await token1.balanceOf(deftPairAddress)).to.eq(
       1000n + 250000187312969n,
     );
   });
