@@ -5,11 +5,13 @@ import {IDeftFactory} from "./interfaces/IDeftFactory.sol";
 import {IDeftPair} from "./interfaces/IDeftPair.sol";
 import {IDeftCallee} from "./interfaces/IDeftCallee.sol";
 import {IERC20} from "./interfaces/IERC20.sol";
+import {TransferHelper} from "./libraries/TransferHelper.sol";
 import {UQ112x112} from "./libraries/UQ112x112.sol";
 import {Math} from "./libraries/Math.sol";
 import {DeftLPT} from "./DeftLPT.sol";
 
 contract DeftPair is IDeftPair, DeftLPT {
+    using TransferHelper for address;
     using UQ112x112 for uint112;
     using UQ112x112 for uint224;
     using Math for uint256;
@@ -89,8 +91,8 @@ contract DeftPair is IDeftPair, DeftLPT {
             "DeftPair: INSUFFICIENT_LIQUIDITY_BURNED"
         );
         _burn(address(this), liquidity);
-        _safeTransfer(_token0, to, amount0);
-        _safeTransfer(_token1, to, amount1);
+        _token0.safeTransfer(to, amount0);
+        _token1.safeTransfer(to, amount1);
         balance0 = IERC20(_token0).balanceOf(address(this));
         balance1 = IERC20(_token1).balanceOf(address(this));
 
@@ -123,8 +125,8 @@ contract DeftPair is IDeftPair, DeftLPT {
             address _token0 = token0;
             address _token1 = token1;
             require(to != _token0 && to != _token1, "DeftPair: INVALID_TO");
-            if (amount0Out > 0) _safeTransfer(_token0, to, amount0Out); // optimistically transfer tokens
-            if (amount1Out > 0) _safeTransfer(_token1, to, amount1Out); // optimistically transfer tokens
+            if (amount0Out > 0) _token0.safeTransfer(to, amount0Out); // optimistically transfer tokens
+            if (amount1Out > 0) _token1.safeTransfer(to, amount1Out); // optimistically transfer tokens
             if (data.length > 0)
                 IDeftCallee(to).deftCall(
                     msg.sender,
@@ -164,13 +166,11 @@ contract DeftPair is IDeftPair, DeftLPT {
     function skim(address to) external noReentrant {
         address _token0 = token0; // gas savings
         address _token1 = token1; // gas savings
-        _safeTransfer(
-            _token0,
+        _token0.safeTransfer(
             to,
             IERC20(_token0).balanceOf(address(this)) - reserve0
         );
-        _safeTransfer(
-            _token1,
+        _token1.safeTransfer(
             to,
             IERC20(_token1).balanceOf(address(this)) - reserve1
         );
@@ -198,20 +198,6 @@ contract DeftPair is IDeftPair, DeftLPT {
         _reserve0 = reserve0;
         _reserve1 = reserve1;
         _blockTimestampLast = blockTimestampLast;
-    }
-
-    function _safeTransfer(
-        address token,
-        address to,
-        uint256 value
-    ) private {
-        (bool success, bytes memory data) = token.call(
-            abi.encodeWithSelector(IERC20.transfer.selector, to, value)
-        );
-        require(
-            success && (data.length == 0 || abi.decode(data, (bool))),
-            "DeftPair: TRANSFER_FAILED"
-        );
     }
 
     // update reserves and, on the first call per block, price accumulators
