@@ -176,7 +176,7 @@ interface IDeftRouter {
 
     function FACTORY() external view returns (address);
 
-    function NATIVE_COIN() external view returns (address);
+    function WNC() external view returns (address);
 
     function getAmountsOut(uint256 amountIn, address[] calldata path)
         external

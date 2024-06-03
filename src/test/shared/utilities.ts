@@ -4,7 +4,7 @@ export function expandTo18Decimals(n: number): bigint {
   return BigInt(n) * 10n ** 18n;
 }
 
-export function getCreate2Address(
+export function getDeftPairCreate2Address(
   factoryAddress: string,
   [tokenA, tokenB]: [string, string],
   bytecode: string,
@@ -20,13 +20,9 @@ export function getCreate2Address(
   );
 }
 
-export function encodePrice(reserve0: bigint, reserve1: bigint) {
+export function encodePrice(reserve0: bigint, reserve1: bigint): bigint[] {
   return [
     (reserve1 * 2n ** 112n) / reserve0,
     (reserve0 * 2n ** 112n) / reserve1,
   ];
 }
-
-export const MINIMUM_LIQUIDITY = 10n ** 3n;
-
-export const UniswapVersion = "1";

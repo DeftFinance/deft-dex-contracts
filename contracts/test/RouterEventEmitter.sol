@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity 0.8.20;
 
-import {IUniswapV2Router01} from "../interfaces/IUniswapV2Router01.sol";
+import {IDeftRouter} from "../interfaces/IDeftRouter.sol";
 
 contract RouterEventEmitter {
     event Amounts(uint256[] amounts);
@@ -18,7 +18,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapExactTokensForTokens.selector,
+                IDeftRouter(router).swapExactTokensForTokens.selector,
                 amountIn,
                 amountOutMin,
                 path,
@@ -40,7 +40,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapTokensForExactTokens.selector,
+                IDeftRouter(router).swapTokensForExactTokens.selector,
                 amountOut,
                 amountInMax,
                 path,
@@ -61,7 +61,7 @@ contract RouterEventEmitter {
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapExactETHForTokens.selector,
+                IDeftRouter(router).swapExactETHForTokens.selector,
                 amountOutMin,
                 path,
                 to,
@@ -82,7 +82,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapTokensForExactETH.selector,
+                IDeftRouter(router).swapTokensForExactETH.selector,
                 amountOut,
                 amountInMax,
                 path,
@@ -104,7 +104,7 @@ contract RouterEventEmitter {
     ) external {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapExactTokensForETH.selector,
+                IDeftRouter(router).swapExactTokensForETH.selector,
                 amountIn,
                 amountOutMin,
                 path,
@@ -125,7 +125,7 @@ contract RouterEventEmitter {
     ) external payable {
         (bool success, bytes memory returnData) = router.delegatecall(
             abi.encodeWithSelector(
-                IUniswapV2Router01(router).swapETHForExactTokens.selector,
+                IDeftRouter(router).swapETHForExactTokens.selector,
                 amountOut,
                 path,
                 to,

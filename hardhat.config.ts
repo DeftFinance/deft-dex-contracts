@@ -1,12 +1,8 @@
 import { HardhatUserConfig } from "hardhat/config";
-
 import "@nomicfoundation/hardhat-toolbox";
-
+import "./src/tasks/accounts";
 import * as dotenv from "dotenv";
 dotenv.config();
-
-// tasks
-import "./src/tasks/accounts";
 
 const config: HardhatUserConfig = {
   networks: {
@@ -15,11 +11,11 @@ const config: HardhatUserConfig = {
     },
   },
   solidity: {
-    version: "0.8.4",
+    version: "0.8.20",
     settings: {
       optimizer: {
         enabled: true,
-        runs: 9999,
+        runs: 200,
       },
       metadata: {
         bytecodeHash: "none",
