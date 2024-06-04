@@ -25,7 +25,7 @@ contract DeftRouter is IDeftRouter {
 
     constructor(address factory, address wnc) {
         require(
-            factory != address(0) && wnc != address(wnc),
+            factory != address(0) && wnc != address(0),
             "DeftRouter: ZERO_ADDRESS"
         );
 

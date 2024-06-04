@@ -87,7 +87,7 @@ library DeftLib {
                             bytes1(0xff),
                             factory,
                             keccak256(abi.encodePacked(token0, token1)),
-                            hex"b2278411b6e88f59c2a0cea73577963b58d4845fe65602721c5da7e9800e02ae" // init code hash
+                            hex"bfa799faa805461955896e775b16ee35d864bd25625dfced1fa97acd0082710b" // init code hash
                         )
                     )
                 )
