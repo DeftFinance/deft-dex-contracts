@@ -4,8 +4,12 @@ pragma solidity 0.8.20;
 //solhint-disable reason-string
 
 import {IDeftPair} from "../interfaces/IDeftPair.sol";
+import "./SwapLib.sol";
 
 library DeftLib {
+
+    using SwapLib for address;
+    using SwapLib for uint256;
     // fetches and sorts the reserves for a pair
     function getReserves(
         address factory,
@@ -120,7 +124,9 @@ library DeftLib {
             reserveIn > 0 && reserveOut > 0,
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
-        uint256 amountInWithFee = amountIn * 997;
+
+        uint256 correctedFee = SwapLib.applyDeltaAlgorithm();
+        uint256 amountInWithFee = amountIn * (1000 - correctedFee);
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
