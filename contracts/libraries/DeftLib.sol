@@ -125,8 +125,9 @@ library DeftLib {
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
 
+        uint256 amountOutNoFee = amountIn * reserveOut / (reserveIn + amountIn);
         uint256 correctedFee = SwapLib.applyDeltaAlgorithm();
-        uint256 amountInWithFee = amountIn * (1000 - correctedFee);
+        uint256 amountInWithFee = amountIn * (1000 - 3);
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;

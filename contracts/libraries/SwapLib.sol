@@ -2,21 +2,30 @@
 pragma solidity 0.8.20;
 
 import {IDeftPair} from "../interfaces/IDeftPair.sol";
+import {IERC20} from "
 
 library SwapLib {
 
+    // Delta Zone Detection Parameters
     int32 public constant LOWER_THRESHOLD_LIMIT = -250;
     int32 public constant UPPER_THRESHOLD_LIMIT = 334;
     int32 public constant LOWER_STOP_LIMIT = -500;
     int32 public constant UPPER_STOP_LIMIT = 1000;
 
-    // Linear Regresion parameters
-    int64 public constant REGRESSION_BASIS_POINT = 1_000_000;
+    // Linear Regresion Parameters
+    int64 public constant LINEAR_REGRESSION_BASIS_POINT = 1_000_000;
     int64 public constant A_LEFT = -184_478;
     int64 public constant B_LEFT = -42_957;
-
     int64 public constant A_RIGHT = 71_226;
     int64 public constant B_RIGHT = -20_084;
+
+    int64 public constant REGRESSION_BASIS_POINT = 1e18;
+    int64 public constant A_LEFT = 8;
+    int64 public constant B_LEFT = -1.8325814637483102e16;
+    int64 public constant A_RIGHT = 15.90541457534101300e17;
+    int64 public constant B_RIGHT =  2.2907268296853878e17;
+
+    // Exponential Regression Parameters
 
     struct DeltaCalcParams{
         address token0;
@@ -63,7 +72,7 @@ library SwapLib {
 
     function _calculateModifiedFee(int64 a, int64 b, int delta) public pure returns(int256 correctedFee) {
 
-        return (((a * delta) + (1000 * b)) / REGRESSION_BASIS_POINT);
+        return (((a * delta) + (1000 * b)) / LINEAR_REGRESSION_BASIS_POINT);
     }
 
     function _calculateStopCF() internal pure returns(uint correctedFee) {
