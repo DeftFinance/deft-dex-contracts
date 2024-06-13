@@ -8,8 +8,6 @@ import "./SwapLib.sol";
 
 library DeftLib {
 
-    using SwapLib for address;
-    using SwapLib for uint256;
     // fetches and sorts the reserves for a pair
     function getReserves(
         address factory,
@@ -40,7 +38,8 @@ library DeftLib {
                 path[i],
                 path[i + 1]
             );
-            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+            
+            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut, path);
         }
     }
 
@@ -59,7 +58,7 @@ library DeftLib {
                 path[i - 1],
                 path[i]
             );
-            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
+            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut, path);
         }
     }
 
@@ -117,17 +116,36 @@ library DeftLib {
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) internal pure returns (uint256 amountOut) {
+        uint256 reserveOut,
+        address[] memory path
+    ) internal view returns (uint256 amountOut) {
         require(amountIn > 0, "DeftLib: INSUFFICIENT_INPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
 
-        uint256 amountOutNoFee = amountIn * reserveOut / (reserveIn + amountIn);
-        uint256 correctedFee = SwapLib.applyDeltaAlgorithm();
-        uint256 amountInWithFee = amountIn * (1000 - 3);
+        (address input, address output) = (path[0], path[1]);
+        (address token0, address token1) = sortTokens(input, output);
+
+        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (input == token0) ?
+            (uint256(0), amountIn * reserveOut / (reserveIn + amountIn)) :
+            (amountIn * reserveOut / (reserveIn + amountIn), uint256(0));
+
+        (uint256 reserve0, uint256 reserve1) = input == token0 ?
+            (reserveIn, reserveOut) : (reserveOut, reserveIn);
+        
+        SwapLib.DeltaCalcParams memory deltaParams = SwapLib.DeltaCalcParams(
+            token0,
+            token1,
+            amount0OutNoFee,
+            amount1OutNoFee,
+            reserve0,
+            reserve1
+        );
+
+        uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
+        uint256 amountInWithFee = amountIn * (1000 - correctedFee);
         uint256 numerator = amountInWithFee * reserveOut;
         uint256 denominator = reserveIn * 1000 + amountInWithFee;
         amountOut = numerator / denominator;
@@ -137,15 +155,37 @@ library DeftLib {
     function getAmountIn(
         uint256 amountOut,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) internal pure returns (uint256 amountIn) {
+        uint256 reserveOut,
+        address[] memory path
+    ) internal view returns (uint256 amountIn) {
         require(amountOut > 0, "DeftLib: INSUFFICIENT_OUTPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
+
+        (address input, address output) = (path[0], path[1]);
+        (address token0, address token1) = sortTokens(input, output);
+
+        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (input == token0) ?
+            (uint256(0), amountOut) :
+            (amountOut, uint256(0));
+
+        (uint256 reserve0, uint256 reserve1) = input == token0 ?
+            (reserveIn, reserveOut) : (reserveOut, reserveIn);
+        
+        SwapLib.DeltaCalcParams memory deltaParams = SwapLib.DeltaCalcParams(
+            token0,
+            token1,
+            amount0OutNoFee,
+            amount1OutNoFee,
+            reserve0,
+            reserve1
+        );
+
+        uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
         uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * 997;
+        uint256 denominator = (reserveOut - amountOut) * (1000 - correctedFee);
         amountIn = numerator / denominator + 1;
     }
 }
