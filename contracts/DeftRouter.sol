@@ -496,17 +496,19 @@ contract DeftRouter is IDeftRouter {
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountOut) {
-        return amountIn.getAmountOut(reserveIn, reserveOut);
+        uint256 reserveOut,
+        address[] memory path
+    ) external view returns (uint256 amountOut) {
+        return amountIn.getAmountOut(reserveIn, reserveOut, path);
     }
 
     function getAmountIn(
         uint256 amountOut,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountIn) {
-        return amountOut.getAmountIn(reserveIn, reserveOut);
+        uint256 reserveOut,
+        address[] memory path
+    ) external view returns (uint256 amountIn) {
+        return amountOut.getAmountIn(reserveIn, reserveOut, path);
     }
 
     function _addLiquidity(
@@ -597,7 +599,8 @@ contract DeftRouter is IDeftRouter {
                     reserveInput;
                 amountOutput = amountInput.getAmountOut(
                     reserveInput,
-                    reserveOutput
+                    reserveOutput,
+                    path
                 );
             }
             (uint256 amount0Out, uint256 amount1Out) = input == token0
