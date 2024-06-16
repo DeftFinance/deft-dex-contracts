@@ -53,8 +53,8 @@ library SwapLib {
         returns(int256 delta) 
     {
 
-        uint256 balance0 = IERC20(_deltaParams.token0).balanceOf(address(this));
-        uint256 balance1 = IERC20(_deltaParams.token1).balanceOf(address(this));
+        // uint256 balance0 = IERC20(_deltaParams.token0).balanceOf(address(this));
+        // uint256 balance1 = IERC20(_deltaParams.token1).balanceOf(address(this));
         
         uint256 reserve0 = _deltaParams.reserve0;
         uint256 reserve1 = _deltaParams.reserve1;
@@ -66,8 +66,8 @@ library SwapLib {
 
         uint256 price_init = 1000000 * reserve0 / reserve1;
         uint256 price_final = (_deltaParams.amount0Out != 0) ? 
-            (1000000 * (_deltaParams.amount0Out + reserve0)) / (balance1) : 
-            (1000000 * balance0) / (_deltaParams.amount1Out + reserve1);
+            (1000000 * (_deltaParams.amount0Out + reserve0)) / (reserve1) : 
+            (1000000 * reserve0) / (_deltaParams.amount1Out + reserve1);
 
         delta = (int256(1000 * price_final / price_init) - 1000);
 

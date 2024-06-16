@@ -6,7 +6,7 @@ import {DeftLib} from "../contracts/libraries/DeftLib.sol";
 import {ERC20Mock} from "@openzeppelin/contracts/mocks/token/ERC20Mock.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
-contract SwapLibTest is Test{
+contract DeftLibTest is Test{
 
     ERC20Mock public token0;
     ERC20Mock public token1;

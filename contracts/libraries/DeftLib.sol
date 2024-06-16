@@ -4,6 +4,7 @@ pragma solidity 0.8.20;
 //solhint-disable reason-string
 
 import {IDeftPair} from "../interfaces/IDeftPair.sol";
+import {IDeftFactory} from "../interfaces/IDeftFactory.sol";
 import "./SwapLib.sol";
 
 library DeftLib {
@@ -80,22 +81,23 @@ library DeftLib {
         address factory,
         address tokenA,
         address tokenB
-    ) internal pure returns (address pair) {
+    ) internal view returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
-        pair = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            bytes1(0xff),
-                            factory,
-                            keccak256(abi.encodePacked(token0, token1)),
-                            hex"bfa799faa805461955896e775b16ee35d864bd25625dfced1fa97acd0082710b" // init code hash
-                        )
-                    )
-                )
-            )
-        );
+        // pair = address(
+        //     uint160(
+        //         uint256(
+        //             keccak256(
+        //                 abi.encodePacked(
+        //                     bytes1(0xff),
+        //                     factory,
+        //                     keccak256(abi.encodePacked(token0, token1)),
+        //                     hex"bfa799faa805461955896e775b16ee35d864bd25625dfced1fa97acd0082710b" // init code hash
+        //                 )
+        //             )
+        //         )
+        //     )
+        // );
+        pair = IDeftFactory(factory).getPair(token0, token1);
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
@@ -125,14 +127,14 @@ library DeftLib {
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
 
-        (address input, address output) = (path[0], path[1]);
-        (address token0, address token1) = sortTokens(input, output);
+        // (address input, address output) = (path[0], path[1]);
+        (address token0, address token1) = sortTokens(path[0], path[1]);
 
-        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (input == token0) ?
+        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (path[0] == token0) ?
             (uint256(0), amountIn * reserveOut / (reserveIn + amountIn)) :
             (amountIn * reserveOut / (reserveIn + amountIn), uint256(0));
 
-        (uint256 reserve0, uint256 reserve1) = input == token0 ?
+        (uint256 reserve0, uint256 reserve1) = path[0] == token0 ?
             (reserveIn, reserveOut) : (reserveOut, reserveIn);
         
         SwapLib.DeltaCalcParams memory deltaParams = SwapLib.DeltaCalcParams(
@@ -144,11 +146,12 @@ library DeftLib {
             reserve1
         );
 
-        uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
-        uint256 amountInWithFee = amountIn * (1000 - correctedFee);
-        uint256 numerator = amountInWithFee * reserveOut;
-        uint256 denominator = reserveIn * 1000 + amountInWithFee;
-        amountOut = numerator / denominator;
+        // uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
+        // uint256 amountInWithFee = amountIn * (1000 - correctedFee);
+        // uint256 numerator = amountInWithFee * reserveOut;
+        // uint256 denominator = reserveIn * 1000 + amountInWithFee;
+        amountOut = amountIn * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams)) * reserveOut / 
+            (reserveIn * 1000 + (amountIn * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams))));
     }
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
@@ -183,9 +186,9 @@ library DeftLib {
             reserve1
         );
 
-        uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
-        uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * (1000 - correctedFee);
-        amountIn = numerator / denominator + 1;
+        // uint256 correctedFee = SwapLib.applyDeltaAlgorithm(deltaParams);
+        // uint256 numerator = reserveIn * amountOut * 1000;
+        // uint256 denominator = (reserveOut - amountOut) * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams));
+        amountIn = reserveIn * amountOut * 1000 / ((reserveOut - amountOut) * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams))) + 1;
     }
 }
