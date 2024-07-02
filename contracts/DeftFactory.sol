@@ -50,9 +50,6 @@ contract DeftFactory is IDeftFactory {
             "DeftFactory: PAIR_EXISTS"
         ); // single check is sufficient
 
-        // pair = address(
-        //     new DeftPair{salt: keccak256(abi.encodePacked(token0, token1))}()
-        // );
         bytes memory bytecode = type(DeftPair).creationCode;
         bytes32 salt = keccak256(abi.encodePacked(token0, token1));
         assembly {

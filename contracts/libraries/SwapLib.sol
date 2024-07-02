@@ -52,9 +52,6 @@ library SwapLib {
         view
         returns(int256 delta) 
     {
-
-        // uint256 balance0 = IERC20(_deltaParams.token0).balanceOf(address(this));
-        // uint256 balance1 = IERC20(_deltaParams.token1).balanceOf(address(this));
         
         uint256 reserve0 = _deltaParams.reserve0;
         uint256 reserve1 = _deltaParams.reserve1;
