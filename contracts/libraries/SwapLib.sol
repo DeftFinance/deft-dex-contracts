@@ -39,7 +39,7 @@ library SwapLib {
         uint256 reserve1;
     }
 
-    function applyDeltaAlgorithm(DeltaCalcParams calldata _deltaParams) public view returns(uint correctedFee) {
+    function applyDeltaAlgorithm(DeltaCalcParams calldata _deltaParams) public pure returns(uint correctedFee) {
 
         int256 delta = _calculateDelta(_deltaParams);
         correctedFee = _calculateThreshold(delta, 3);
@@ -49,7 +49,7 @@ library SwapLib {
         DeltaCalcParams memory _deltaParams
     ) 
         internal 
-        view
+        pure
         returns(int256 delta) 
     {
         
