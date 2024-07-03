@@ -23,6 +23,8 @@ interface IDeftPair is IDeftLPT {
 
     function initialize(address token0, address token1) external;
 
+    function setRouter(address router) external;
+
     function mint(address to) external returns (uint256 liquidity);
 
     function burn(address to)

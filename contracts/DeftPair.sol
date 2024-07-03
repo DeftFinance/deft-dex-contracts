@@ -27,6 +27,7 @@ contract DeftPair is IDeftPair, DeftLPT {
     uint32 private blockTimestampLast; // uses single storage slot, accessible via getReserves
 
     address public immutable FACTORY = msg.sender;
+    address public ROUTER;
     uint256 public constant MINIMUM_LIQUIDITY = 10**3;
 
     modifier noReentrant() {
@@ -36,11 +37,21 @@ contract DeftPair is IDeftPair, DeftLPT {
         unlocked = 1;
     }
 
+    modifier onlyRouter() {
+        require(msg.sender == ROUTER, "DeftPair: Must be called from Router");
+        _;
+    }
+
     // called once by the FACTORY at time of deployment
     function initialize(address _token0, address _token1) external {
         require(msg.sender == FACTORY, "DeftPair: FORBIDDEN"); // sufficient check
         token0 = _token0;
         token1 = _token1;
+    }
+
+    function setRouter(address router) external {
+        require(msg.sender == FACTORY, "DeftPair: FORBIDDEN");
+        ROUTER = router;
     }
 
     // this low-level function should be called from a contract which performs important safety checks
@@ -107,7 +118,7 @@ contract DeftPair is IDeftPair, DeftLPT {
         uint256 amount1Out,
         address to,
         bytes calldata data
-    ) external noReentrant {
+    ) external noReentrant onlyRouter {
         require(
             amount0Out > 0 || amount1Out > 0,
             "DeftPair: INSUFFICIENT_OUTPUT_AMOUNT"

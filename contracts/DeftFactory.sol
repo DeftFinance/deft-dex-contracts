@@ -9,12 +9,15 @@ contract DeftFactory is IDeftFactory {
     address public feeTo;
     address public feeToSetter;
     address[] public allPairs;
+    address public router;
+    address public owner;
     mapping(address => mapping(address => address)) public getPair;
 
     bytes32 public constant PAIR_HASH = keccak256(type(DeftPair).creationCode);
 
     constructor(address _feeToSetter) {
         feeToSetter = _feeToSetter;
+        owner = msg.sender;
     }
 
     function setFeeTo(address _feeTo) external {
@@ -25,6 +28,12 @@ contract DeftFactory is IDeftFactory {
     function setFeeToSetter(address _feeToSetter) external {
         require(msg.sender == feeToSetter, "DeftFactory: FORBIDDEN");
         feeToSetter = _feeToSetter;
+    }
+
+    function setRouter(address _router) external {
+
+        require(msg.sender == owner);
+        router = _router;
     }
 
     function createPair(address tokenA, address tokenB)
@@ -41,10 +50,13 @@ contract DeftFactory is IDeftFactory {
             "DeftFactory: PAIR_EXISTS"
         ); // single check is sufficient
 
-        pair = address(
-            new DeftPair{salt: keccak256(abi.encodePacked(token0, token1))}()
-        );
+        bytes memory bytecode = type(DeftPair).creationCode;
+        bytes32 salt = keccak256(abi.encodePacked(token0, token1));
+        assembly {
+            pair := create2(0, add(bytecode, 32), mload(bytecode), salt)
+        }
         IDeftPair(pair).initialize(token0, token1);
+        IDeftPair(pair).setRouter(router);
         getPair[token0][token1] = pair;
         getPair[token1][token0] = pair; // populate mapping in the reverse direction
         allPairs.push(pair);

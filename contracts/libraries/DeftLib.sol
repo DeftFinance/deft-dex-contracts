@@ -4,8 +4,11 @@ pragma solidity 0.8.20;
 //solhint-disable reason-string
 
 import {IDeftPair} from "../interfaces/IDeftPair.sol";
+import {IDeftFactory} from "../interfaces/IDeftFactory.sol";
+import "./SwapLib.sol";
 
 library DeftLib {
+
     // fetches and sorts the reserves for a pair
     function getReserves(
         address factory,
@@ -36,7 +39,8 @@ library DeftLib {
                 path[i],
                 path[i + 1]
             );
-            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut);
+            
+            amounts[i + 1] = getAmountOut(amounts[i], reserveIn, reserveOut, path);
         }
     }
 
@@ -55,7 +59,7 @@ library DeftLib {
                 path[i - 1],
                 path[i]
             );
-            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut);
+            amounts[i - 1] = getAmountIn(amounts[i], reserveIn, reserveOut, path);
         }
     }
 
@@ -77,22 +81,9 @@ library DeftLib {
         address factory,
         address tokenA,
         address tokenB
-    ) internal pure returns (address pair) {
+    ) internal view returns (address pair) {
         (address token0, address token1) = sortTokens(tokenA, tokenB);
-        pair = address(
-            uint160(
-                uint256(
-                    keccak256(
-                        abi.encodePacked(
-                            bytes1(0xff),
-                            factory,
-                            keccak256(abi.encodePacked(token0, token1)),
-                            hex"bfa799faa805461955896e775b16ee35d864bd25625dfced1fa97acd0082710b" // init code hash
-                        )
-                    )
-                )
-            )
-        );
+        pair = IDeftFactory(factory).getPair(token0, token1);
     }
 
     // given some amount of an asset and pair reserves, returns an equivalent amount of the other asset
@@ -113,32 +104,70 @@ library DeftLib {
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) internal pure returns (uint256 amountOut) {
+        uint256 reserveOut,
+        address[] memory path
+    ) internal view returns (uint256 amountOut) {
         require(amountIn > 0, "DeftLib: INSUFFICIENT_INPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
-        uint256 amountInWithFee = amountIn * 997;
-        uint256 numerator = amountInWithFee * reserveOut;
-        uint256 denominator = reserveIn * 1000 + amountInWithFee;
-        amountOut = numerator / denominator;
+
+        // (address input, address output) = (path[0], path[1]);
+        (address token0, address token1) = sortTokens(path[0], path[1]);
+
+        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (path[0] == token0) ?
+            (uint256(0), amountIn * reserveOut / (reserveIn + amountIn)) :
+            (amountIn * reserveOut / (reserveIn + amountIn), uint256(0));
+
+        (uint256 reserve0, uint256 reserve1) = path[0] == token0 ?
+            (reserveIn, reserveOut) : (reserveOut, reserveIn);
+        
+        SwapLib.DeltaCalcParams memory deltaParams = SwapLib.DeltaCalcParams(
+            token0,
+            token1,
+            amount0OutNoFee,
+            amount1OutNoFee,
+            reserve0,
+            reserve1
+        );
+
+        amountOut = amountIn * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams)) * reserveOut / 
+            (reserveIn * 1000 + (amountIn * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams))));
     }
 
     // given an output amount of an asset and pair reserves, returns a required input amount of the other asset
     function getAmountIn(
         uint256 amountOut,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) internal pure returns (uint256 amountIn) {
+        uint256 reserveOut,
+        address[] memory path
+    ) internal view returns (uint256 amountIn) {
         require(amountOut > 0, "DeftLib: INSUFFICIENT_OUTPUT_AMOUNT");
         require(
             reserveIn > 0 && reserveOut > 0,
             "DeftLib: INSUFFICIENT_LIQUIDITY"
         );
-        uint256 numerator = reserveIn * amountOut * 1000;
-        uint256 denominator = (reserveOut - amountOut) * 997;
-        amountIn = numerator / denominator + 1;
+
+        (address input, address output) = (path[0], path[1]);
+        (address token0, address token1) = sortTokens(input, output);
+
+        (uint256 amount0OutNoFee, uint256 amount1OutNoFee) = (input == token0) ?
+            (uint256(0), amountOut) :
+            (amountOut, uint256(0));
+
+        (uint256 reserve0, uint256 reserve1) = input == token0 ?
+            (reserveIn, reserveOut) : (reserveOut, reserveIn);
+        
+        SwapLib.DeltaCalcParams memory deltaParams = SwapLib.DeltaCalcParams(
+            token0,
+            token1,
+            amount0OutNoFee,
+            amount1OutNoFee,
+            reserve0,
+            reserve1
+        );
+
+        amountIn = reserveIn * amountOut * 1000 / ((reserveOut - amountOut) * (1000 - SwapLib.applyDeltaAlgorithm(deltaParams))) + 1;
     }
 }

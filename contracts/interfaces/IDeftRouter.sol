@@ -197,12 +197,14 @@ interface IDeftRouter {
     function getAmountOut(
         uint256 amountIn,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountOut);
+        uint256 reserveOut,
+        address[] memory path
+    ) external view returns (uint256 amountOut);
 
     function getAmountIn(
         uint256 amountOut,
         uint256 reserveIn,
-        uint256 reserveOut
-    ) external pure returns (uint256 amountIn);
+        uint256 reserveOut,
+        address[] memory path
+    ) external view returns (uint256 amountIn);
 }
