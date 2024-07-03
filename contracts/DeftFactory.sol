@@ -6,11 +6,11 @@ import {IDeftPair} from "./interfaces/IDeftPair.sol";
 import {DeftPair} from "./DeftPair.sol";
 
 contract DeftFactory is IDeftFactory {
+    address public owner;
     address public feeTo;
+    address public router;
     address public feeToSetter;
     address[] public allPairs;
-    address public router;
-    address public owner;
     mapping(address => mapping(address => address)) public getPair;
 
     bytes32 public constant PAIR_HASH = keccak256(type(DeftPair).creationCode);
@@ -31,7 +31,6 @@ contract DeftFactory is IDeftFactory {
     }
 
     function setRouter(address _router) external {
-
         require(msg.sender == owner);
         router = _router;
     }
