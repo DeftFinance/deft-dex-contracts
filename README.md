@@ -1,4 +1,4 @@
-# <img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/DEFT%20Logo.png"  width="32px" height="32px"> Deft Dex
+# <img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/DEFT%20Logo.png"  width="28px" height="28px"> Deft Dex
 
 ## Introduction
 Deft is a decentralized exchange (DEX) designed to address the significant issue of impermanent loss in uniform liquidity constant product automated market makers
