@@ -30,8 +30,11 @@ Based on the different characteristics of these regions, different fee calculati
 In the Alert Zone, a linear regression method is used that gradually increases the fee from 3 to 20 based on the swap parameters. Finally, in the Danger Zone, an exponential scheme is adopted.
 As the reserves and spot prices drastically change during a swap which pushes the state coordinates to such a region, the corresponding fee calculation differs from the two abovementioned regions.
 Considering this fact, an exponential regression is used that changes the fee from 20 to 50 in the basis point.
+The entire algorithm is also presented in this flowchart:
 
-For more information, consider reading the whitepaper provided in this [link](https://github.com/DeftFinance/deft-dex-contracts/blob/main/DEX1.pdf).
+<img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/Chart.drawio.png" width="60%" height="60%"> 
+
+For more information, consider reading the whitepaper provided in this [link](https://github.com/DeftFinance/deft-dex-contracts/blob/main/DeftDex-Whitepaper.pdf).
 
 ## Foundry
 
