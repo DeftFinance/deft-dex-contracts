@@ -1,4 +1,4 @@
-<img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/DEFT%20Logo.png"  width="12%" height="12%"> 
+<img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/DEFT%20Logo.png"  width="32px" height="32px"> 
 
 # Deft DEX
 
