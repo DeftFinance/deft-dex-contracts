@@ -32,7 +32,7 @@ The entire algorithm is also presented in this flowchart:
 
 <img src="https://github.com/DeftFinance/deft-dex-contracts/blob/main/assets/flow.png" width="60%" height="60%"> 
 
-For more information, consider reading the whitepaper provided in this [link](https://github.com/DeftFinance/deft-dex-contracts/blob/main/DeftDex-Whitepaper.pdf).
+*For more information, consider reading the whitepaper provided in this [link](https://github.com/DeftFinance/deft-dex-contracts/blob/main/DeftDex-Whitepaper.pdf).*
 
 ## Foundry
 
